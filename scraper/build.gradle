@@ -1,0 +1,50 @@
+plugins {
+    id 'org.springframework.boot' version '2.4.3'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+}
+
+dependencies {
+    compile project(':persistence')
+    compile project(':telegram')
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    testCompile 'org.testcontainers:testcontainers:1.15.0'
+    testCompile 'org.testcontainers:postgresql:1.15.0'
+}
+
+def TD_LIB_PATH = System.getenv("TD_LIB_JAVA_PATH")
+
+bootRun {
+    jvmArgs = [
+            "-Djava.library.path=$TD_LIB_PATH"
+    ]
+}
+
+task restoreDb(type:JavaExec) {
+    group = 'application'
+    main 'org.textindexer.extractor.AppStateRestoration'
+    jvmArgs = [
+            "-Djava.library.path=$TD_LIB_PATH",
+            "-Dspring.profiles.active=local"
+    ]
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+    errorOutput = System.err
+}
+
+task localRun(type:JavaExec) {
+    group = 'application'
+    main 'org.textindexer.extractor.AppStateRestoration'
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+    errorOutput = System.err
+}
+
+test {
+    jvmArgs = [ "-Djava.library.path=$TD_LIB_PATH" ]
+}
+
+

@@ -1,0 +1,5 @@
+description = "Telegram Service"
+
+dependencies {
+    compile project(":telegram-model")
+}

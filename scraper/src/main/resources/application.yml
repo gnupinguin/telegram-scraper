@@ -1,0 +1,37 @@
+tor:
+  host: localhost
+  socksPort: 9050
+  httpPort: 8118
+  controlPort: 9051
+  password: '""'
+
+db:
+  url: jdbc:postgresql://localhost:5432/scraperdb
+  username: user
+  password: password
+
+scraper:
+  strategy: Web
+
+telegram:
+  login:
+    phoneNumber: +71112345678
+    authCodeFile: ${user.home}/code.txt
+  client:
+    databaseDirectory: "tdlib"
+    useMessageDatabase: true
+    useSecretChats: true
+    apiId: 0
+    apiHash: ""
+    systemLanguageCode: "en"
+    deviceModel: "Desktop"
+    systemVersion: "Unknown"
+    applicationVersion: "1.0"
+    enableStorageOptimizer: true
+
+logging:
+  level:
+    org:
+      springframework:
+        boot:
+          autoconfigure: ERROR
