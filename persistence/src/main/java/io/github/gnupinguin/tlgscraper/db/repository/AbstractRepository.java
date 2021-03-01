@@ -31,6 +31,11 @@ public abstract class AbstractRepository<E>{
         return true;
     }
 
+    protected boolean saveWithoutIdGeneration(String query, Collection<E> objects) {
+        queryExecutor.batchedUpdateQuery(query, mapper::toFields, objects, null);
+        return true;
+    }
+
     @Nonnull
     protected List<E> getInternal(String query, Collection<?> ids) {
         if (!ids.isEmpty()) {

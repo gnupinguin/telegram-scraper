@@ -2,6 +2,7 @@ package io.github.gnupinguin.tlgscraper.db.repository;
 
 import io.github.gnupinguin.tlgscraper.db.mappers.SqlEntityMapper;
 import io.github.gnupinguin.tlgscraper.db.orm.QueryExecutor;
+import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Message;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +40,7 @@ public class MessageRepositoryTest {
 
     @Test
     public void testGet() {
-        Message message = getMessage(1);
+        Message message = getMessage();
         doAnswer(invocation -> {
             Function<List<Object>, Message> fieldsMapper = invocation.getArgument(1, Function.class);
             fieldsMapper.apply(List.of());
@@ -53,7 +54,7 @@ public class MessageRepositoryTest {
 
     @Test
     public void testGetNotFound() {
-        Message message = getMessage(1);
+        Message message = getMessage();
         when(queryExecutor.selectQuery(eq(selectWhere("internal_id IN (?);")), any(), any()))
                 .thenReturn(List.of());
         Message clone = repository.get(message.getInternalId());
@@ -62,7 +63,7 @@ public class MessageRepositoryTest {
 
     @Test
     public void testSave() {
-        Message message = getMessage(1);
+        Message message = getMessage();
         doAnswer(invocation -> {
             Function<Message, List<Object>> objectMapper = invocation.getArgument(1, Function.class);
             Function<List<Object>, Long> idMapper = invocation.getArgument(3, Function.class);
@@ -77,7 +78,7 @@ public class MessageRepositoryTest {
 
     @Test
     public void testDeleteAllIds() {
-        Message message = getMessage(1);
+        Message message = getMessage();
         doAnswer(invocation -> {
             Function<Long, List<Object>> idMapper = invocation.getArgument(1, Function.class);
             assertEquals(List.of(1L), idMapper.apply(1L));
@@ -101,27 +102,28 @@ public class MessageRepositoryTest {
 
     @Test
     public void testSelectForChat() {
-        Message message = getMessage(1);
+        Message message = getMessage();
         List<Message> messageList = List.of(message);
-        when(queryExecutor.selectQuery(eq(selectWhere("chat_id = ?;")), any(Function.class), eq(List.of(message.getChatId()))))
+        when(queryExecutor.selectQuery(eq(selectWhere("chat_id = ?;")), any(Function.class), eq(List.of(message.getChannel().getId()))))
                 .thenReturn(messageList);
-        List<Message> messages = repository.getForChat(message.getChatId());
+        List<Message> messages = repository.getForChat(message.getChannel().getId());
         assertEquals(messageList, messages);
     }
 
     @Nonnull
-    private Message getMessage(int id) {
-        final Message message = new Message();
-        message.setInternalId((long) id);
-        message.setChatId(32L);
-        return message;
+    private Message getMessage() {
+        return Message.builder()
+                .internalId(1L)
+                .channel(Chat.builder()
+                        .id(32L)
+                        .build())
+                .build();
     }
 
     @Nonnull
     private String selectWhere(String condition) {
         return "SELECT internal_id, chat_id, message_id, " +
-                "reply_to_message_id, forwarded_from_chat_id, " +
-                "forwarded_from_message_id, type, text_content, " +
+                "type, text_content, " +
                 "publish_date, load_date, views FROM message WHERE " + condition;
     }
 
@@ -130,14 +132,11 @@ public class MessageRepositoryTest {
         return "INSERT INTO message" +
                 " (chat_id, " +
                 "message_id, " +
-                "reply_to_message_id, " +
-                "forwarded_from_chat_id, " +
-                "forwarded_from_message_id, " +
                 "type, " +
                 "text_content, " +
                 "publish_date, " +
                 "load_date, " +
-                "views) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+                "views) VALUES (?, ?, ?, ?, ?, ?, ?);";
     }
 
 }

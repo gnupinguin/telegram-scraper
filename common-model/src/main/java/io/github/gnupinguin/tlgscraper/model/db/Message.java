@@ -1,36 +1,42 @@
 package io.github.gnupinguin.tlgscraper.model.db;
 
+import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-import java.sql.Timestamp;
+import java.util.Date;
+import java.util.Set;
 
 @Data
-@NoArgsConstructor
+@Builder
 @AllArgsConstructor
 public class Message {
 
     private Long internalId;
 
-    private Long chatId;
+    private Chat channel;
 
-    private Long messageId;
+    private long id;
 
-    private Long replyToMessageId;
-
-    private Long forwardedFromChatId;
-
-    private Long forwardedFromMessageId;
-
-    private Integer type;
+    private MessageType type;
 
     private String textContent;
 
-    private Timestamp publishDate;
+    private Date publishDate;
 
-    private Timestamp loadDate;
+    private Date loadDate;
 
-    private Integer views;
+    private int viewCount;
+
+    private Forwarding forwarding;
+
+    private Replying replying;
+
+    private Set<Mention> mentions;
+
+    private Set<HashTag> hashTags;
+
+    private Set<Link> links;
 
 }

@@ -13,8 +13,8 @@ public class ChatSqlEntityMapper implements SqlEntityMapper<Chat> {
     @Nonnull
     @Override
     public List<Object> toFields(@Nonnull Chat entity) {
-        return List.of(entity.getId(),
-                entity.getName(),
+        return List.of(entity.getName(),
+                entity.getTitle(),
                 entity.getDescription(),
                 entity.getMembers());
     }
@@ -23,10 +23,13 @@ public class ChatSqlEntityMapper implements SqlEntityMapper<Chat> {
     @Nullable
     public Chat toObject(@Nonnull List<Object> fields) {
         if (!fields.isEmpty()) {
-            return new Chat((Long) fields.get(0),
-                    (String) fields.get(1),
-                    (String) fields.get(2),
-                    (Integer) fields.get(3));
+            return Chat.builder()
+                    .id((Long) fields.get(0))
+                    .name((String) fields.get(1))
+                    .title((String) fields.get(2))
+                    .description((String) fields.get(3))
+                    .members((Integer) fields.get(4))
+                    .build();
         }
         return null;
     }

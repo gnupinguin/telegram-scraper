@@ -1,6 +1,8 @@
 package io.github.gnupinguin.tlgscraper.db.mappers;
 
+import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Message;
+import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
@@ -15,35 +17,31 @@ public class MessageSqlEntityMapper implements SqlEntityMapper<Message> {
     @Override
     public @Nonnull List<Object> toFields(@Nonnull Message entity) {
         return Arrays.asList(
-                entity.getChatId(),
-                entity.getMessageId(),
-                entity.getReplyToMessageId(),
-                entity.getForwardedFromChatId(),
-                entity.getForwardedFromMessageId(),
-                entity.getType(),
+                entity.getChannel().getId(),
+                entity.getId(),
+                entity.getType().getTypeId(),
                 entity.getTextContent(),
                 entity.getPublishDate(),
                 entity.getLoadDate(),
-                entity.getViews()
+                entity.getViewCount()
         );
     }
 
     @Override
     public @Nullable Message toObject(@Nonnull List<Object> fields) {
         if (!fields.isEmpty()) {
-            Message message = new Message();
-            message.setInternalId((Long) fields.get(0));
-            message.setChatId((Long) fields.get(1));
-            message.setMessageId((Long) fields.get(2));
-            message.setReplyToMessageId((Long) fields.get(3));
-            message.setForwardedFromChatId((Long) fields.get(4));
-            message.setForwardedFromMessageId((Long) fields.get(5));
-            message.setType((Integer) fields.get(6));
-            message.setTextContent((String) fields.get(7));
-            message.setPublishDate((Timestamp) fields.get(8));
-            message.setLoadDate((Timestamp) fields.get(9));
-            message.setViews((Integer) fields.get(10));
-            return message;
+            return Message.builder()
+                    .internalId((Long) fields.get(0))
+                    .channel(Chat.builder()
+                            .id((Long) fields.get(1))
+                            .build())
+                    .id((Long) fields.get(2))
+                    .type(MessageType.parse((Integer) fields.get(3)))
+                    .textContent((String) fields.get(4))
+                    .publishDate((Timestamp) fields.get(5))
+                    .loadDate((Timestamp) fields.get(6))
+                    .viewCount((Integer) fields.get(7))
+                    .build();
         }
         return null;
     }

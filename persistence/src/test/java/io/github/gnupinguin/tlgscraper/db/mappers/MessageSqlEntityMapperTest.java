@@ -1,6 +1,8 @@
 package io.github.gnupinguin.tlgscraper.db.mappers;
 
+import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Message;
+import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -18,41 +20,43 @@ public class MessageSqlEntityMapperTest {
     @InjectMocks
     private MessageSqlEntityMapper mapper;
 
-    private Message message = new Message(1L, 2L, 3L, 4L,
-                                5L, 6L, 1, "hello",
-                                new Timestamp(1L), new Timestamp(2L), 3);
-
+    private Message message = Message.builder()
+            .internalId(0L)
+            .id(1L)
+            .channel(Chat.builder()
+                    .id(3L)
+                    .build())
+            .type(MessageType.Text)
+            .textContent("hello")
+            .viewCount(32)
+            .loadDate(new Timestamp(1L))
+            .publishDate(new Timestamp(1L))
+            .build();
     @Test
     public void testToFields() {
         List<Object> fields = mapper.toFields(message);
 
-        assertEquals(10, fields.size());
-        assertEquals(message.getChatId(), fields.get(0));
-        assertEquals(message.getMessageId(), fields.get(1));
-        assertEquals(message.getReplyToMessageId(), fields.get(2));
-        assertEquals(message.getForwardedFromChatId(), fields.get(3));
-        assertEquals(message.getForwardedFromMessageId(), fields.get(4));
-        assertEquals(message.getType(), fields.get(5));
-        assertEquals(message.getTextContent(), fields.get(6));
-        assertEquals(message.getPublishDate(), fields.get(7));
-        assertEquals(message.getLoadDate(), fields.get(8));
-        assertEquals(message.getViews(), fields.get(9));
+        assertEquals(7, fields.size());
+        assertEquals(message.getChannel().getId(), fields.get(0));
+        assertEquals(message.getId(), fields.get(1));
+        assertEquals(message.getType().getTypeId(), fields.get(2));
+        assertEquals(message.getTextContent(), fields.get(3));
+        assertEquals(message.getPublishDate(), fields.get(4));
+        assertEquals(message.getLoadDate(), fields.get(5));
+        assertEquals(message.getViewCount(), fields.get(6));
     }
 
     @Test
     public void testToObject() {
         List<Object> fields = List.of(
                 message.getInternalId(),
-                message.getChatId(),
-                message.getMessageId(),
-                message.getReplyToMessageId(),
-                message.getForwardedFromChatId(),
-                message.getForwardedFromMessageId(),
-                message.getType(),
+                message.getChannel().getId(),
+                message.getId(),
+                message.getType().getTypeId(),
                 message.getTextContent(),
                 message.getPublishDate(),
                 message.getLoadDate(),
-                message.getViews());
+                message.getViewCount());
         Message result = mapper.toObject(fields);
 
         assertEquals(message, result);

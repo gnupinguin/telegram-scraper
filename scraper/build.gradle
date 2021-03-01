@@ -5,29 +5,21 @@ plugins {
 
 dependencies {
     compile project(':persistence')
-    compile project(':telegram')
 
     implementation 'org.springframework.boot:spring-boot-starter'
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
+    implementation group: 'org.jsoup', name: 'jsoup', version: '1.13.1'
+
     testCompile 'org.testcontainers:testcontainers:1.15.0'
     testCompile 'org.testcontainers:postgresql:1.15.0'
-}
-
-def TD_LIB_PATH = System.getenv("TD_LIB_JAVA_PATH")
-
-bootRun {
-    jvmArgs = [
-            "-Djava.library.path=$TD_LIB_PATH"
-    ]
 }
 
 task restoreDb(type:JavaExec) {
     group = 'application'
     main 'org.textindexer.extractor.AppStateRestoration'
     jvmArgs = [
-            "-Djava.library.path=$TD_LIB_PATH",
             "-Dspring.profiles.active=local"
     ]
     classpath = sourceSets.main.runtimeClasspath
@@ -41,10 +33,6 @@ task localRun(type:JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     standardInput = System.in
     errorOutput = System.err
-}
-
-test {
-    jvmArgs = [ "-Djava.library.path=$TD_LIB_PATH" ]
 }
 
 

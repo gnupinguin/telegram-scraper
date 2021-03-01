@@ -17,22 +17,22 @@ public class ChatSqlEntityMapperTest {
     @InjectMocks
     private ChatSqlEntityMapper mapper;
 
-    private Chat entity = new Chat(1L, "name", "description", 32);
+    private Chat entity = new Chat(1L, "name", "title", "description", 32, null);
 
     @Test
     public void testToFields() {
         List<Object> fields = mapper.toFields(entity);
 
         assertEquals(4, fields.size());
-        assertEquals(entity.getId(), fields.get(0));
-        assertEquals(entity.getName(), fields.get(1));
+        assertEquals(entity.getName(), fields.get(0));
+        assertEquals(entity.getTitle(), fields.get(1));
         assertEquals(entity.getDescription(), fields.get(2));
         assertEquals(entity.getMembers(), fields.get(3));
     }
 
     @Test
     public void testToObject() {
-        Chat chat = mapper.toObject(List.of(1L, "name", "description", 32));
+        Chat chat = mapper.toObject(List.of(1L, "name", "title", "description", 32));
         assertEquals(entity, chat);
     }
 

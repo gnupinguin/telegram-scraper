@@ -4,6 +4,8 @@ import io.github.gnupinguin.tlgscraper.db.orm.DbProperties
 import io.github.gnupinguin.tlgscraper.db.orm.QueryExecutorImpl
 import io.github.gnupinguin.tlgscraper.db.repository.*
 import io.github.gnupinguin.tlgscraper.model.db.*
+import io.github.gnupinguin.tlgscraper.model.scraper.MessageType
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
@@ -32,6 +34,8 @@ class RepositoriesTest {
     private lateinit var mentionRepository: MentionRepositoryImpl
     private lateinit var linkRepository: LinkRepositoryImpl
     private lateinit var hashtagRepository: HashTagRepositoryImpl
+    private lateinit var forwardingRepository: ForwardingRepositoryImpl
+    private lateinit var replyingRepository: ReplyingRepositoryImpl
 
     private lateinit var utilsRepository: UtilsRepository
 
@@ -49,28 +53,13 @@ class RepositoriesTest {
         val manager = DbManager(props)
         val queryExecutor = QueryExecutorImpl(manager)
 
-        chatRepository =
-            ChatRepositoryImpl(
-                queryExecutor,
-                ChatSqlEntityMapper()
-            )
-        messageRepository = MessageRepositoryImpl(
-            queryExecutor,
-            MessageSqlEntityMapper()
-        )
-        mentionRepository = MentionRepositoryImpl(
-            queryExecutor,
-            MentionSqlEntityMapper()
-        )
-        linkRepository =
-            LinkRepositoryImpl(
-                queryExecutor,
-                LinkSqlEntityMapper()
-            )
-        hashtagRepository = HashTagRepositoryImpl(
-            queryExecutor,
-            HashTagSqlEntityMapper()
-        )
+        chatRepository = ChatRepositoryImpl(queryExecutor, ChatSqlEntityMapper())
+        messageRepository = MessageRepositoryImpl(queryExecutor, MessageSqlEntityMapper())
+        mentionRepository = MentionRepositoryImpl(queryExecutor, MentionSqlEntityMapper())
+        linkRepository = LinkRepositoryImpl(queryExecutor, LinkSqlEntityMapper())
+        hashtagRepository = HashTagRepositoryImpl(queryExecutor, HashTagSqlEntityMapper())
+        forwardingRepository = ForwardingRepositoryImpl(queryExecutor, ForwardingSqlEntityMapper())
+        replyingRepository = ReplyingRepositoryImpl(queryExecutor, ReplyingSqlEntityMapper())
 
         utilsRepository =
             UtilsRepository(queryExecutor)
@@ -79,7 +68,10 @@ class RepositoriesTest {
         message = getMessage(chat)
     }
 
-    private fun clearRepositories() {
+    @After
+    fun clearRepositories() {
+        forwardingRepository.delete()
+        replyingRepository.delete()
         hashtagRepository.delete()
         linkRepository.delete()
         mentionRepository.delete()
@@ -90,7 +82,7 @@ class RepositoriesTest {
     @Test
     fun testChatRepository() {
         clearRepositories()
-        val secondChat = Chat(2, "second", "dsc", 1)
+        val secondChat = Chat(null, "second", "title", "dsc", 1, null)
         chatRepository.save(listOf(chat, secondChat))
         val clone = chatRepository.get(chat.id)
         assertEquals(chat, clone)
@@ -106,8 +98,7 @@ class RepositoriesTest {
 
     @Test
     fun testChatRepositorySelectByNames() {
-        clearRepositories()
-        val secondChat = Chat(2, "second", "dsc", 1)
+        val secondChat = Chat(null, "second", "title", "dsc", 1, null)
         val chats = listOf(chat, secondChat)
         chatRepository.save(chats)
 
@@ -117,7 +108,6 @@ class RepositoriesTest {
 
     @Test
     fun testMessageRepository() {
-        clearRepositories()
         chatRepository.save(chat)
 
         assertNull(message.internalId)
@@ -125,40 +115,38 @@ class RepositoriesTest {
         assertNotNull(message.internalId)
         val clone = messageRepository.get(message.internalId)
 
-        assertEquals(message, clone)
+        assertEquals(message.internalId, clone!!.internalId)
         messageRepository.delete(listOf(message.internalId))
         assertNull(messageRepository.get(message.internalId))
     }
 
     @Test
     fun testLinkRepository() {
-        clearRepositories()
         chatRepository.save(chat)
         messageRepository.save(message)
 
-        val link = Link(null, message.internalId, "url")
+        val link = Link(message, 1, "url")
         linkRepository.save(link)
         assertNotNull(link.id)
         val clone = linkRepository.get(link.id)
 
-        assertEquals(link, clone)
+        assertEquals(link.id, clone!!.id)
         linkRepository.delete(listOf(link.id))
         assertNull(linkRepository.get(link.id))
     }
 
     @Test
     fun testMentionRepository() {
-        clearRepositories()
         chatRepository.save(chat)
         messageRepository.save(message)
 
         val mention =
-            Mention(null, message.internalId, "mention")
+            Mention(message, 1, "mention")
         mentionRepository.save(mention)
         assertNotNull(mention.id)
         val clone = mentionRepository.get(mention.id)
 
-        assertEquals(mention, clone)
+        assertEquals(mention.id, clone!!.id)
         mentionRepository.delete(listOf(mention.id))
         assertNull(mentionRepository.get(mention.id))
     }
@@ -169,12 +157,12 @@ class RepositoriesTest {
         messageRepository.save(message)
 
         val hashTag =
-            HashTag(null, message.internalId, "tag")
+            HashTag(message, 1, "tag")
         hashtagRepository.save(hashTag)
         assertNotNull(hashTag.id)
         val clone = hashtagRepository.get(hashTag.id)
 
-        assertEquals(hashTag, clone)
+        assertEquals(hashTag.id, clone!!.id)
         hashtagRepository.delete(listOf(hashTag.id))
         assertNull(hashtagRepository.get(hashTag.id))
     }
@@ -184,15 +172,39 @@ class RepositoriesTest {
         assertNotNull(utilsRepository.currentDbDate)
     }
 
+    @Test
+    fun testForwarding() {
+        chatRepository.save(chat)
+        messageRepository.save(message)
+
+        val forwarding = Forwarding(message, "anotherChat", 1)
+        forwardingRepository.save(forwarding)
+        val clone = forwardingRepository.get(forwarding.message.internalId)
+
+        assertEquals(forwarding.forwardedFromMessageId, clone!!.forwardedFromMessageId)
+        forwardingRepository.delete(listOf(forwarding.message.internalId))
+        assertNull(forwardingRepository.get(forwarding.message.internalId))
+    }
+
+    @Test
+    fun testReplying() {
+        chatRepository.save(chat)
+        messageRepository.save(message)
+
+        val replying = Replying(message, 1)
+        replyingRepository.save(replying)
+        val clone = replyingRepository.get(replying.message.internalId)
+
+        assertEquals(replying.replyToMessageId, clone!!.replyToMessageId)
+        replyingRepository.delete(listOf(replying.message.internalId))
+        assertNull(replyingRepository.get(replying.message.internalId))
+    }
+
     private fun getChat() =
-        Chat(1, "chat", "description", 1)
+        Chat(1, "chat", "title", "description", 1, null)
 
     private fun getMessage(chat: Chat) =
-        Message(
-            null, chat.id,
-            1, 1, 1, 1,
-            1, "some_text", date(), date(), 12
-        )
+        Message(null, chat, 1, MessageType.Text, "some_text", date(), date(), 12, null, null, emptySet(), emptySet(), emptySet())
 
     private fun date() = java.sql.Timestamp(Date().time)
 

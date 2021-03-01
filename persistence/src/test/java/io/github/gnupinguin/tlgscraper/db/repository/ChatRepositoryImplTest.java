@@ -44,7 +44,7 @@ public class ChatRepositoryImplTest {
             Function<List<Object>, Chat> fieldsMapper = invocation.getArgument(1, Function.class);
             fieldsMapper.apply(List.of());
             return List.of(chat);
-        }).when(queryExecutor).selectQuery(eq("SELECT id, name, description, members FROM chat WHERE id IN (?);"), any(), eq(List.of(1L)));
+        }).when(queryExecutor).selectQuery(eq("SELECT id, name, title, description, members FROM chat WHERE id IN (?);"), any(), eq(List.of(1L)));
 
         Chat clone = repository.get(1L);
         assertEquals(chat, clone);
@@ -54,7 +54,7 @@ public class ChatRepositoryImplTest {
     @Test
     public void testGetNotFound() {
         Chat chat = getChat(1);
-        when(queryExecutor.selectQuery(eq("SELECT id, name, description, members FROM chat WHERE id IN (?);"), any(), any()))
+        when(queryExecutor.selectQuery(eq("SELECT id, name, title, description, members FROM chat WHERE id IN (?);"), any(), any()))
                 .thenReturn(List.of());
         Chat clone = repository.get(chat.getId());
         assertNull(clone);
@@ -64,12 +64,17 @@ public class ChatRepositoryImplTest {
     public void testSave() {
         Chat chat = getChat(1);
         doAnswer(invocation -> {
+//            Function<Chat, List<Object>> objectMapper = invocation.getArgument(1, Function.class);
+//            objectMapper.apply(chat);
+//            return List.of();
             Function<Chat, List<Object>> objectMapper = invocation.getArgument(1, Function.class);
+            Function<List<Object>, Long> idMapper = invocation.getArgument(3, Function.class);
             objectMapper.apply(chat);
-            return List.of();
+            return List.of(idMapper.apply(List.of(2L)));
         }).when(queryExecutor)
-                .batchedUpdateQuery(eq("INSERT INTO chat (id, name, description, members) VALUES (?, ?, ?, ?);"), any(Function.class), eq(List.of(chat)), eq(null));
+                .batchedUpdateQuery(eq("INSERT INTO chat (name, title, description, members) VALUES (?, ?, ?, ?);"), any(Function.class), eq(List.of(chat)), any(Function.class));
         assertTrue(repository.save(chat));
+        assertEquals(Long.valueOf(2L), chat.getId());
         verify(mapper, times(1)).toFields(chat);
     }
 
@@ -80,7 +85,7 @@ public class ChatRepositoryImplTest {
         List<Chat> chatList = List.of(chat1, chat2);
         assertTrue(repository.save(chatList));
         verify(queryExecutor, times(1))
-                .batchedUpdateQuery(eq("INSERT INTO chat (id, name, description, members) VALUES (?, ?, ?, ?);"), any(), eq(List.of(chat1, chat2)), eq(null));
+                .batchedUpdateQuery(eq("INSERT INTO chat (name, title, description, members) VALUES (?, ?, ?, ?);"), any(), eq(List.of(chat1, chat2)), any(Function.class));
     }
 
     @Test

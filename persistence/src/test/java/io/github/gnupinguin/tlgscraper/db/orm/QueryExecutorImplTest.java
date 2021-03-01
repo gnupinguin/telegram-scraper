@@ -1,6 +1,7 @@
 package io.github.gnupinguin.tlgscraper.db.orm;
 
 import io.github.gnupinguin.tlgscraper.model.db.Link;
+import io.github.gnupinguin.tlgscraper.model.db.Message;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -32,8 +33,10 @@ public class QueryExecutorImplTest {
     @InjectMocks
     private QueryExecutorImpl executor;
 
-    private Function<Link, List<Object>> serializer = link -> List.of(link.getInternalMessageId(), link.getUrl());
-    private Function<List<Object>, Link> objectsToLinkMapper = objects -> new Link((Long)objects.get(0), (Long)objects.get(1), (String)objects.get(2));
+    private Function<Link, List<Object>> serializer = link -> List.of(link.getMessage().getInternalId(), link.getUrl());
+    private Function<List<Object>, Link> objectsToLinkMapper = objects -> new Link(Message.builder()
+            .internalId((Long)objects.get(1))
+            .build(), (Long)objects.get(0), (String)objects.get(2));
 
     private Function<List<Object>, Long> idMapper = list -> (Long)list.get(0);
 
@@ -49,7 +52,7 @@ public class QueryExecutorImplTest {
 
     @Test
     public void testUpdateAndMapResult() throws Exception {
-        Link link = new Link(23L, 32L, "url");
+        Link link = getLink(23);
         String query = "insert";
 
         PreparedStatement statement = mock(PreparedStatement.class);
@@ -74,7 +77,7 @@ public class QueryExecutorImplTest {
 
         var ids = executor.batchedUpdateQuery(query, serializer, List.of(link, link), idMapper);
 
-        verify(statement, times(2)).setObject(1, link.getInternalMessageId());
+        verify(statement, times(2)).setObject(1, link.getMessage().getInternalId());
         verify(statement, times(2)).setObject(2, link.getUrl());
         verify(statement, times(2)).addBatch();
 
@@ -84,7 +87,7 @@ public class QueryExecutorImplTest {
 
     @Test
     public void testUpdateWithoutResultMapping() throws Exception {
-        Link link = new Link(23L, 32L, "url");
+        Link link = getLink(23);
         String query = "insert";
 
         PreparedStatement statement = mock(PreparedStatement.class);
@@ -95,7 +98,7 @@ public class QueryExecutorImplTest {
 
         var ids = executor.batchedUpdateQuery(query, serializer, List.of(link, link), null);
 
-        verify(statement, times(2)).setObject(1, link.getInternalMessageId());
+        verify(statement, times(2)).setObject(1, link.getMessage().getInternalId());
         verify(statement, times(2)).setObject(2, link.getUrl());
         verify(statement, times(2)).addBatch();
         verifyZeroInteractions(resultSet);
@@ -105,8 +108,8 @@ public class QueryExecutorImplTest {
 
     @Test
     public void testSelect() throws Exception {
-        Link link1 = new Link(23L, 32L, "url");
-        Link link2 = new Link(24L, 32L, "url");
+        Link link1 = getLink(23);
+        Link link2 = getLink(24);
         String query = "select";
 
         PreparedStatement statement = mock(PreparedStatement.class);
@@ -122,7 +125,7 @@ public class QueryExecutorImplTest {
         when(resultSet.getObject(1))
                 .thenReturn(link1.getId(), link2.getId());
         when(resultSet.getObject(2))
-                .thenReturn(link1.getInternalMessageId(), link2.getInternalMessageId());
+                .thenReturn(link1.getMessage().getInternalId(), link2.getMessage().getInternalId());
         when(resultSet.getObject(3))
                 .thenReturn(link1.getUrl(), link2.getUrl());
         when(manager.execute(eq(query), any(), any()))
@@ -154,6 +157,10 @@ public class QueryExecutorImplTest {
 
         assertEquals(date, currentDate);
         verifyNoMoreInteractions(statement);
+    }
+
+    private Link getLink(int id) {
+        return new Link(Message.builder().internalId(1L).build(), (long)id, "url");
     }
 
 }

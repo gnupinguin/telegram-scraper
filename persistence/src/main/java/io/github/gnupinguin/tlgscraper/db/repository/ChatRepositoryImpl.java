@@ -15,7 +15,7 @@ import java.util.List;
 public class ChatRepositoryImpl extends AbstractRepository<Chat> implements ChatRepository {
 
     private static final String DELETE_ALL = "DELETE FROM chat;";
-    private static final String INSERT_QUERY = "INSERT INTO chat (id, name, description, members) VALUES (?, ?, ?, ?);";
+    private static final String INSERT_QUERY = "INSERT INTO chat (name, title, description, members) VALUES (?, ?, ?, ?);";
     private static final String DELETE_QUERY = "DELETE FROM chat WHERE id = ?;";
 
     public ChatRepositoryImpl(QueryExecutor queryExecutor, SqlEntityMapper<Chat> mapper) {
@@ -24,14 +24,13 @@ public class ChatRepositoryImpl extends AbstractRepository<Chat> implements Chat
 
     @Override
     public boolean save(Collection<Chat> objects) {
-        queryExecutor.batchedUpdateQuery(INSERT_QUERY, mapper::toFields, objects, null);
-        return true;
+        return saveWithIdGeneration(INSERT_QUERY, (id, chat) -> chat.setId(id), objects);
     }
 
     @Nonnull
     @Override
     public List<Chat> get(Collection<Long> ids) {
-        String query = "SELECT id, name, description, members FROM chat WHERE id IN " + DbTools.questionMarks(ids.size()) + ";";
+        String query = "SELECT id, name, title, description, members FROM chat WHERE id IN " + DbTools.questionMarks(ids.size()) + ";";
         return getInternal(query, ids);
     }
 
@@ -47,7 +46,7 @@ public class ChatRepositoryImpl extends AbstractRepository<Chat> implements Chat
 
     @Override
     public List<Chat> getChatsByNames(List<String> names) {
-        String query = "SELECT id, name, description, members FROM chat WHERE name IN " + DbTools.questionMarks(names.size()) + ";";
+        String query = "SELECT id, name, title, description, members FROM chat WHERE name IN " + DbTools.questionMarks(names.size()) + ";";
         return getInternal(query, names);
     }
 

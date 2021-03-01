@@ -6,6 +6,7 @@ public enum MessageType {
     Video(2),
     Audio(3),
     Document(4),
+    Multimedia(5),
     Other(-1);
 
     private final int typeId;
@@ -16,5 +17,20 @@ public enum MessageType {
 
     public int getTypeId() {
         return typeId;
+    }
+
+    public static MessageType parse(Integer typeId) {
+        if (typeId == null) {
+            return Other;
+        }
+        switch (typeId) {
+            case 0: return Text;
+            case 1: return Photo;
+            case 2: return Video;
+            case 3: return Audio;
+            case 4: return Document;
+            case 5: return Multimedia;
+            default: return Other;
+        }
     }
 }
