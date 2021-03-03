@@ -2,8 +2,7 @@ package io.github.gnupinguin.tlgscraper.scraper
 
 import io.github.gnupinguin.tlgscraper.scraper.telegram.TelegramWebClient
 import io.github.gnupinguin.tlgscraper.scraper.utils.Profiles
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,9 +27,9 @@ class IntegrationTest {
 
     @Test
     fun testMessages() {
-        val messages = telegramWebClient.getLastMessages("nexta_live", 100)
+        val messages = telegramWebClient.getLastMessages("nexta_live", 300)
         assertNotNull(messages)
+        assertTrue(messages.size >= 300)
     }
-
 
 }

@@ -3,14 +3,15 @@ package io.github.gnupinguin.tlgscraper.model.db;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.List;
 
 
+
 @Data
+@ToString(exclude = {"messages", "description"})
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
 public class Chat {
 

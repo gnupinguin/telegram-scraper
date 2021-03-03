@@ -1,7 +1,7 @@
 FROM postgres:latest
 
-ENV POSTGRES_USER onetlg
-ENV POSTGRES_PASSWORD password
-ENV POSTGRES_DB onedb
+ENV POSTGRES_USER scraper
+ENV POSTGRES_PASSWORD Scraper_db!
+ENV POSTGRES_DB scraperdb
 
-COPY src/main/resources/schema/* /docker-entrypoint-initdb.d/
+COPY src/main/resources/schema/*.sql /docker-entrypoint-initdb.d/

@@ -61,6 +61,11 @@ public class BufferedMentionQueue implements MentionQueue {
         updateStatus(mention, TaskStatus.Undefined);
     }
 
+    @Override
+    public void markFiltered(String mention) {
+        updateStatus(mention, TaskStatus.Filtered);
+    }
+
     private void updateStatus(String mention, TaskStatus status) {
         try {
             lock.lock();

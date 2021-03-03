@@ -1,6 +1,7 @@
 package io.github.gnupinguin.tlgscraper.scraper.scrapper;
 
 import io.github.gnupinguin.tlgscraper.model.db.*;
+import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
 import io.github.gnupinguin.tlgscraper.model.scraper.web.Channel;
 import io.github.gnupinguin.tlgscraper.model.scraper.web.WebMessage;
 import io.github.gnupinguin.tlgscraper.scraper.telegram.TelegramWebClient;
@@ -10,6 +11,9 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.sql.Timestamp;
+import java.time.OffsetDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,8 +55,13 @@ public class ChatScrapperImpl implements ChatScrapper {
     @Nonnull
     private Message channelInfoMessage(@Nonnull Chat chat,
                                        @Nonnull ParsedEntity<Channel> parsedEntity) {
+        var timestamp = Timestamp.from(OffsetDateTime.now().toInstant());
         return baseMessage(chat, parsedEntity)
                 .id(CHANNEL_MESSAGE_ID)
+                .type(MessageType.ChannelInfo)
+                .loadDate(timestamp)
+                .publishDate(timestamp)
+                .viewCount(0)
                 .build();
     }
 
@@ -63,8 +72,22 @@ public class ChatScrapperImpl implements ChatScrapper {
                 .peek(message -> message.getMentions().forEach(mention -> mention.setMessage(message)))
                 .peek(message -> message.getHashTags().forEach(tag -> tag.setMessage(message)))
                 .peek(message -> message.getLinks().forEach(link -> link.setMessage(message)))
+                .peek(this::updateForwarding)
+                .peek(this::updateReplying)
                 .collect(Collectors.toList());
         chat.setMessages(messages);
+    }
+
+    private void updateForwarding(Message message) {
+        if (message.getForwarding() != null) {
+            message.getForwarding().setMessage(message);
+        }
+    }
+
+    private void updateReplying(Message message) {
+        if (message.getReplying() != null) {
+            message.getReplying().setMessage(message);
+        }
     }
 
     @Nonnull
@@ -82,12 +105,38 @@ public class ChatScrapperImpl implements ChatScrapper {
         WebMessage message = parsedMessage.getEntity();
         return baseMessage(chat, parsedMessage)
                 .id(message.getId())
-                .loadDate(message.getLoadDate())
-                .publishDate(message.getPublishDate())
+                .loadDate(timestamp(message.getLoadDate()))
+                .publishDate(timestamp(message.getPublishDate()))
                 .type(message.getType())
                 .textContent(message.getTextContent())
                 .viewCount(message.getViewCount())
+                .forwarding(getForwarding(message))
+                .replying(getReplying(message))
                 .build();
+    }
+
+    private Forwarding getForwarding(WebMessage message) {
+        if (message.getForwardedFromChannel() != null) {
+            return Forwarding.builder()
+                    .forwardedFromChannel(message.getForwardedFromChannel())
+                    .forwardedFromMessageId(message.getForwardedFromMessageId())
+                    .build();
+        }
+        return null;
+    }
+
+    private Replying getReplying(WebMessage message) {
+        if (message.getReplyToMessageId() != null) {
+            return Replying.builder()
+                    .replyToMessageId(message.getReplyToMessageId())
+                    .build();
+        }
+        return null;
+    }
+
+    @Nonnull
+    private Timestamp timestamp(Date loadDate) {
+        return Timestamp.from(loadDate.toInstant());
     }
 
     @Nonnull

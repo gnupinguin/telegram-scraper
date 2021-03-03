@@ -6,28 +6,9 @@ tor:
   password: '""'
 
 db:
-  url: jdbc:postgresql://localhost:5432/scraperdb
-  username: user
-  password: password
-
-scraper:
-  strategy: Web
-
-telegram:
-  login:
-    phoneNumber: +71112345678
-    authCodeFile: ${user.home}/code.txt
-  client:
-    databaseDirectory: "tdlib"
-    useMessageDatabase: true
-    useSecretChats: true
-    apiId: 0
-    apiHash: ""
-    systemLanguageCode: "en"
-    deviceModel: "Desktop"
-    systemVersion: "Unknown"
-    applicationVersion: "1.0"
-    enableStorageOptimizer: true
+  url: jdbc:postgresql://localhost:5433/scraperdb
+  username: scraper
+  password: Scraper_db!
 
 logging:
   level:

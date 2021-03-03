@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS hashtag;
 CREATE TABLE hashtag(
    id BIGSERIAL,
    internal_message_id bigint NOT NULL,
-   tag varchar(128) NOT NULL,
+   tag varchar(64) NOT NULL,
    PRIMARY KEY(id)
 );
 
@@ -43,7 +43,7 @@ CREATE TABLE message(
    chat_id bigint NOT NULL,
    message_id bigint NOT NULL,
    type int2 NOT NULL,
-   text_content varchar(4096),
+   text_content varchar(4608),
    publish_date timestamp NOT NULL,
    load_date timestamp NOT NULL,
    views int NOT NULL,
@@ -54,8 +54,8 @@ DROP TABLE IF EXISTS chat;
 CREATE TABLE chat(
     id BIGSERIAL,
     name varchar(32) NOT NULL,
-    title varchar(32),
-    description varchar(256),
+    title varchar(512),
+    description varchar(300),
     members int NOT NULL,
     PRIMARY KEY(id)
 );

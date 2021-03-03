@@ -7,6 +7,7 @@ public enum TaskStatus {
     Active(1),
     SuccessfullyProcessed(2),
     InvalidProcessed(3),
+    Filtered(4),
     Undefined(-1);
 
     private final int status;

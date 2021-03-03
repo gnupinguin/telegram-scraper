@@ -4,11 +4,13 @@ import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.Date;
 import java.util.Set;
 
 @Data
+@ToString(exclude = {"mentions", "hashTags", "links", "forwarding", "replying"})
 @Builder
 @AllArgsConstructor
 public class Message {

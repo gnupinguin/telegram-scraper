@@ -3,8 +3,8 @@ package io.github.gnupinguin.tlgscraper.scraper.scrapper;
 import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Mention;
 import io.github.gnupinguin.tlgscraper.model.db.Message;
+import io.github.gnupinguin.tlgscraper.scraper.filter.ChatFilter;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.ApplicationStorage;
-import io.github.gnupinguin.tlgscraper.scraper.searcher.LanguageDetector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -31,7 +31,7 @@ public class CrossChatScrapperImpl implements CrossChatScrapper {
     private final ChatScrapper chatScrapper;
     private final MentionQueue mentionQueue;
     private final ApplicationStorage storage;
-    private final LanguageDetector detector;
+    private final ChatFilter filter;
 
     private final List<String> failedMentions = Collections.synchronizedList(new ArrayList<>(MAX_FAILED_CHANNELS_COUNT));
 
@@ -70,25 +70,18 @@ public class CrossChatScrapperImpl implements CrossChatScrapper {
         var chat = chatScrapper.scrap(channel, DEFAULT_MESSAGES_COUNT);
         if (chat != null) {
             failedMentions.clear();
-            if (detector.detectLanguage(extractText(chat))) {
+            if (filter.doFilter(chat)) {
                 storage.save(chat);
                 mentionQueue.add(extractMentions(chat));
             } else {
                 log.info("Can not detect channel language: {}", channel);
-                mentionQueue.markUndefined(channel);
+                mentionQueue.markFiltered(channel);
             }
         } else {
             log.info("Channel '{}' not found", channel);
             failedMentions.add(channel);
             mentionQueue.markInvalid(channel);
         }
-    }
-
-    @Nonnull
-    private List<String> extractText(Chat chat) {
-        return chat.getMessages().stream()
-                .map(Message::getTextContent)
-                .collect(Collectors.toList());
     }
 
     private boolean isBotName(@Nonnull String name) {

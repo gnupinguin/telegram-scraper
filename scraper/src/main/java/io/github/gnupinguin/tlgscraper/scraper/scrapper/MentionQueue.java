@@ -12,5 +12,7 @@ public interface MentionQueue {
 
     void markUndefined(String mention);
 
+    void markFiltered(String mention);
+
     void restore(List<String> failedMentions);
 }

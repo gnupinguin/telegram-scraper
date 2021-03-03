@@ -19,7 +19,7 @@ public class ProxySourceSelector extends ProxySelector {
 
     @Override
     public void connectFailed(URI uri, SocketAddress sa, IOException e) {
-        proxySource.forceUpdate();
+        //ignore
     }
 
     @Override

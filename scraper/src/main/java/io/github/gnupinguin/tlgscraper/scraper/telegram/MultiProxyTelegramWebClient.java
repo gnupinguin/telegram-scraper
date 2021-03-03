@@ -4,6 +4,7 @@ import io.github.gnupinguin.tlgscraper.model.scraper.web.Channel;
 import io.github.gnupinguin.tlgscraper.model.scraper.web.WebMessage;
 import io.github.gnupinguin.tlgscraper.scraper.proxy.ProxySource;
 import io.github.gnupinguin.tlgscraper.scraper.proxy.ProxySourceSelector;
+import io.github.gnupinguin.tlgscraper.scraper.proxy.UserAgentSource;
 import io.github.gnupinguin.tlgscraper.scraper.web.ParsedEntity;
 import io.github.gnupinguin.tlgscraper.scraper.web.TelegramHtmlParser;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 @Slf4j
@@ -31,21 +33,27 @@ public class MultiProxyTelegramWebClient implements TelegramWebClient {
     private static final int MAX_ATTEMPTS = 10;
 
     private final AtomicInteger requestsCount = new AtomicInteger(0);
+    private final AtomicReference<String> userAgent;
 
     private final HttpClient client;
     private final ProxySource proxySource;
+    private final UserAgentSource userAgentSource;
     private final Limiter limiter;
     private final TelegramHtmlParser parser;
 
+
     public MultiProxyTelegramWebClient(@Nonnull ProxySource proxySource,
-                                       @Nonnull Limiter limiter,
+                                       UserAgentSource userAgentSource, @Nonnull Limiter limiter,
                                        @Nonnull TelegramHtmlParser parser) {
         this.proxySource = proxySource;
+        this.userAgentSource = userAgentSource;
         this.limiter = limiter;
         this.client = HttpClient.newBuilder()
                 .proxy(new ProxySourceSelector(proxySource))
                 .build();
         this.parser = parser;
+
+        userAgent = new AtomicReference<>(userAgentSource.nextUserAgent());
     }
 
     @Override
@@ -58,12 +66,6 @@ public class MultiProxyTelegramWebClient implements TelegramWebClient {
 
     @Override
     public List<ParsedEntity<WebMessage>> getLastMessages(@Nonnull String channel, int count) {
-        return onProxy(() -> fetchMessages(channel, count))
-                .orElseGet(List::of);
-    }
-
-    @Nonnull
-    private Optional<List<ParsedEntity<WebMessage>>> fetchMessages(@Nonnull String channel, int count) {
         List<ParsedEntity<WebMessage>> result = new ArrayList<>(count);
         List<ParsedEntity<WebMessage>> entities = requestMessages(channel);
         while (!entities.isEmpty() && result.size() < count) {
@@ -72,15 +74,16 @@ public class MultiProxyTelegramWebClient implements TelegramWebClient {
             ParsedEntity<WebMessage> last = entities.get(entities.size() - 1);
             entities = requestMessages(channel, last.getEntity().getId());
         }
-        return Optional.of(result);
+        return result;
     }
 
     private boolean updateProxy() {
         if (requestsCount.get() > MAX_REQUESTS_COUNT) {
             proxySource.forceUpdate();
             for(int i = 0; i < MAX_ATTEMPTS; i++) {
-                if (isChannel(CONFIRMED_CHANNEL)) {
+                if (confirmedChannelFound()) {
                     requestsCount.set(0);
+                    userAgent.set(userAgentSource.nextUniqueAgent());
                     return true;
                 }
             }
@@ -91,8 +94,8 @@ public class MultiProxyTelegramWebClient implements TelegramWebClient {
         }
     }
 
-    private boolean isChannel(@Nonnull String channel) {
-        return requestChannel(channel)
+    private boolean confirmedChannelFound() {
+        return requestChannel(CONFIRMED_CHANNEL)
                 .map(response -> response.contains("Preview channel"))
                 .orElse(false);
     }
@@ -109,13 +112,14 @@ public class MultiProxyTelegramWebClient implements TelegramWebClient {
     }
 
     private List<ParsedEntity<WebMessage>> requestMessages(String channel) {
-        return request("https://t.me/s/" + channel)
+        return onProxy(() -> request("https://t.me/s/" + channel))
                 .map(parser::parseMessages)
                 .orElseGet(List::of);
+
     }
 
     private List<ParsedEntity<WebMessage>> requestMessages(String channel, long beforeId) {
-        return request(String.format("https://t.me/s/%s?before=%d", channel, beforeId))
+        return onProxy(() -> request(String.format("https://t.me/s/%s?before=%d", channel, beforeId)))
                 .map(parser::parseMessages)
                 .orElseGet(List::of);
     }
@@ -140,6 +144,8 @@ public class MultiProxyTelegramWebClient implements TelegramWebClient {
 
     private HttpRequest getRequest(@Nonnull String url) {
         return HttpRequest.newBuilder()
+                .header("User-Agent", userAgent.get())
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
                 .uri(URI.create(url))
                 .GET().build();
     }

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -30,7 +31,7 @@ public class ApplicationStorageImpl implements ApplicationStorage {
 
     @Override
     public void save(@Nonnull Chat chat) {
-        if (chatRepository.get(chat.getId()) != null) {
+        if (!isChatPresent(chat)) {
             log.info("Channel already scrapped: {}", chat);
             return;
         }
@@ -46,12 +47,26 @@ public class ApplicationStorageImpl implements ApplicationStorage {
         mentionRepository.save(mentions);
         hashTagRepository.save(hashtags);
         linkRepository.save(links);
+        forwardingRepository.save(unionSingleEntities(chat.getMessages(), Message::getForwarding));
+        replyingRepository.save(unionSingleEntities(chat.getMessages(), Message::getReplying));
+    }
+
+    private boolean isChatPresent(@Nonnull Chat chat) {
+        return chatRepository.getChatsByNames(List.of(chat.getName())).isEmpty();
     }
 
     private <T> List<T> unionEntities(List<Message> messages, Function<Message, Collection<T>> mapper) {
         return messages.stream()
                 .map(mapper)
                 .flatMap(Collection::stream)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    private <T> List<T> unionSingleEntities(List<Message> messages, Function<Message, T> mapper) {
+        return messages.stream()
+                .map(mapper)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 

@@ -40,10 +40,12 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
                 String title = channelTitleTag.text();
                 if (usersTag.size() == 1) {
                     String usersStr = usersTag.text().replaceAll("\\D", "");
-                    int users = Integer.parseInt(usersStr);
-                    if (descriptionTag.size() == 1) {
-                        String description = replaceBrTags(descriptionTag);
-                        return parsedEntity(new Channel(name, title, description, users), descriptionTag);
+                    if (!usersStr.isBlank()) {
+                        int users = Integer.parseInt(usersStr);
+                        if (descriptionTag.size() == 1) {
+                            String description = replaceBrTags(descriptionTag);
+                            return parsedEntity(new Channel(name, title, description, users), descriptionTag);
+                        }
                     }
                 }
             }
@@ -53,7 +55,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
 
     @Override
     public List<ParsedEntity<WebMessage>> parseMessages(@Nonnull String html) {
-        Date date = new Date();
+        Date date = Date.from(OffsetDateTime.now().toInstant());
         Document document = getDocument(html);
         String channel = extractChannel(document);
         if (channel == null) {
@@ -69,7 +71,8 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
     private ParsedEntity<WebMessage> parse(Date date, String channel, Element messageWidget) {
         try {
             Elements textWidget = messageWidget.getElementsByClass("tgme_widget_message_text");
-            if (!isPinnedMessage(textWidget)) {
+            Integer views = views(messageWidget);
+            if (views != null) {
                 WebMessage.WebMessageBuilder builder = WebMessage.builder()
                         .id(messageId(messageWidget))
                         .channel(channel)
@@ -77,7 +80,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
                         .textContent(replaceBrTags(textWidget))
                         .loadDate(date)
                         .publishDate(publishDate(messageWidget))
-                        .viewCount(views(messageWidget))
+                        .viewCount(views)
                         .replyToMessageId(replyToMessageId(messageWidget));
                 builder = fillForwarding(messageWidget, builder);
                 return parsedEntity(builder.build(), textWidget);
@@ -87,10 +90,6 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
             log.info(messageWidget.html());
             throw e;
         }
-    }
-
-    private boolean isPinnedMessage(Elements textWidget) {
-        return textWidget.text().contains("pinned «");
     }
 
     private <T> ParsedEntity<T> parsedEntity(T entity, Elements content) {
@@ -111,7 +110,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
         if (text.startsWith("#")) {
             hashTags.add(text.substring(1));
         } else if (href.startsWith("http")) {
-            if (!text.startsWith("@")) {
+            if (!text.startsWith("@") && href.length() <= 2048) {
                 links.add(href);
                 String mention = extractLinkMention(href);
                 if (mention != null) {
@@ -141,6 +140,8 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
         Elements videos = messageWidget.getElementsByClass("tgme_widget_message_video");
         Elements photos = messageWidget.getElementsByClass("tgme_widget_message_photo");
         Elements text = messageWidget.getElementsByClass("tgme_widget_message_text");
+        Elements document = messageWidget.getElementsByClass("tgme_widget_message_document");
+        Elements audio = messageWidget.getElementsByClass("tgme_widget_message_audio");
 
         if (videos.isEmpty() && photos.isEmpty() && !text.isEmpty()) {
             return MessageType.Text;
@@ -150,6 +151,10 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
             return MessageType.Video;
         } else if (!photos.isEmpty()) {
             return MessageType.Photo;
+        } else if (!document.isEmpty()) {
+            return MessageType.Document;
+        } else if (!audio.isEmpty()) {
+            return MessageType.Audio;
         }
         return MessageType.Other;
     }
@@ -166,17 +171,20 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
         return null;
     }
 
-    private int views(Element messageWidget) {
+    private Integer views(Element messageWidget) {
         Elements viewsTag = messageWidget.getElementsByClass("tgme_widget_message_views");
-        String text = viewsTag.text();
-        double k = 1.0;
-        if (text.endsWith("K")) {
-            k = 1000;
-        } else if (text.endsWith("M")) {
-            k = 1_000_000;
-        }
+        if (!viewsTag.isEmpty()) {
+            String text = viewsTag.text();
+            double k = 1.0;
+            if (text.endsWith("K")) {
+                k = 1000;
+            } else if (text.endsWith("M")) {
+                k = 1_000_000;
+            }
 
-        return (int) (Double.parseDouble(text.replaceAll("[MK]", "")) * k);
+            return (int) (Double.parseDouble(text.replaceAll("[MK]", "")) * k);
+        }
+        return null;
     }
 
     @Nonnull
@@ -187,9 +195,11 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
             String href = attributes.get("href");
             Matcher matcher = TELEGRAM_CHANNEL_LINK.matcher(href);
             if (matcher.find()) {
-                return builder
-                        .forwardedFromChannel(matcher.group(1))
-                        .forwardedFromMessageId(Long.valueOf(matcher.group(2)));
+                if (matcher.group(2) != null) {
+                    return builder
+                            .forwardedFromChannel(matcher.group(1))
+                            .forwardedFromMessageId(Long.valueOf(matcher.group(2)));
+                }
             }
         }
         return builder;

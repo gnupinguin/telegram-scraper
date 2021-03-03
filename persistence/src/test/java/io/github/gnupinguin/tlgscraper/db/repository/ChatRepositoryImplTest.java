@@ -107,9 +107,9 @@ public class ChatRepositoryImplTest {
 
     @Nonnull
     private Chat getChat(int id) {
-        final Chat chat = new Chat();
-        chat.setId((long) id);
-        return chat;
+        return Chat.builder()
+                .id((long)id)
+                .build();
     }
 
 }

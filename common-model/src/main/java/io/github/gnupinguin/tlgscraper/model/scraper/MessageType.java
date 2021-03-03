@@ -7,7 +7,9 @@ public enum MessageType {
     Audio(3),
     Document(4),
     Multimedia(5),
-    Other(-1);
+
+    Other(-1),
+    ChannelInfo(-2);
 
     private final int typeId;
 
