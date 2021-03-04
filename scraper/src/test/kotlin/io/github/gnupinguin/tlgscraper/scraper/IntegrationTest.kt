@@ -26,14 +26,14 @@ class IntegrationTest {
     fun testChannelFound() {
         val channel = telegramWebClient.searchChannel("nexta_live")
         assertNotNull(channel)
-        assertEquals(channel.entity.name, "nexta_live")
+        assertEquals(channel?.entity?.name, "nexta_live")
     }
 
     @Test
     fun testMessages() {
-        val messages = telegramWebClient.getLastMessages("nexta_live", 300)
+        val messages = telegramWebClient.getLastMessages("nexta_live", 20)
         assertNotNull(messages)
-        assertTrue(messages.size >= 300)
+        assertTrue(messages.size >= 20)
     }
 
     @Test

@@ -1,4 +1,4 @@
-package io.github.gnupinguin.tlgscraper.scraper.filter;
+package io.github.gnupinguin.tlgscraper.scraper.scrapper.filter;
 
 import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Message;

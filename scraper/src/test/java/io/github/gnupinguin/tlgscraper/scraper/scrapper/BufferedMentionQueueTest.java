@@ -3,6 +3,7 @@ package io.github.gnupinguin.tlgscraper.scraper.scrapper;
 import io.github.gnupinguin.tlgscraper.db.queue.MentionTask;
 import io.github.gnupinguin.tlgscraper.db.queue.StatusTaskQueue;
 import io.github.gnupinguin.tlgscraper.db.queue.TaskStatus;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.BufferedMentionQueue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
