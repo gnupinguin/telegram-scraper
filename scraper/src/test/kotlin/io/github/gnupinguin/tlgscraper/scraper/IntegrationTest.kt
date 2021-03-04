@@ -32,7 +32,6 @@ class IntegrationTest {
     @Test
     fun testMessages() {
         val messages = telegramWebClient.getLastMessages("nexta_live", 20)
-        assertNotNull(messages)
         assertTrue(messages.size >= 20)
     }
 

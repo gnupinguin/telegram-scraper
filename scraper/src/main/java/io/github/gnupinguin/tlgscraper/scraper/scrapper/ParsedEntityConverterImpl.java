@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
 import java.sql.Timestamp;
-import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -44,11 +43,10 @@ public class ParsedEntityConverterImpl implements ParsedEntityConverter {
     @Nonnull
     private Message channelInfoMessage(@Nonnull Chat chat,
                                        @Nonnull ParsedEntity<Channel> parsedEntity) {
-        var timestamp = Timestamp.from(OffsetDateTime.now().toInstant());
+        Timestamp timestamp = timestamp(parsedEntity.getLoadDate());
         return baseMessage(chat, parsedEntity)
                 .id(CHANNEL_MESSAGE_ID)
                 .type(MessageType.ChannelInfo)
-                .loadDate(timestamp)
                 .publishDate(timestamp)
                 .viewCount(0)
                 .build();
@@ -94,7 +92,6 @@ public class ParsedEntityConverterImpl implements ParsedEntityConverter {
         WebMessage message = parsedMessage.getEntity();
         return baseMessage(chat, parsedMessage)
                 .id(message.getId())
-                .loadDate(timestamp(message.getLoadDate()))
                 .publishDate(timestamp(message.getPublishDate()))
                 .type(message.getType())
                 .textContent(message.getTextContent())
@@ -133,6 +130,7 @@ public class ParsedEntityConverterImpl implements ParsedEntityConverter {
                                                @Nonnull ParsedEntity<?> parsedEntity) {
         return Message.builder()
                 .channel(chat)
+                .loadDate(timestamp(parsedEntity.getLoadDate()))
                 .hashTags(getHashTags(parsedEntity))
                 .mentions(getMentions(parsedEntity))
                 .links(getLinks(parsedEntity));

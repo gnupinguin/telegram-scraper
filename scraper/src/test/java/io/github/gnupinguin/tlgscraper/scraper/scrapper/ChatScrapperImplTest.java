@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -34,7 +35,7 @@ public class ChatScrapperImplTest {
 
     @Test
     public void testSuccessful() {
-        ParsedEntity<Channel> channelParsedEntity = new ParsedEntity<>(null, Set.of(), Set.of(), Set.of());
+        ParsedEntity<Channel> channelParsedEntity = new ParsedEntity<>(null, new Date(), Set.of(), Set.of(), Set.of());
         when(webClient.searchChannel(CHANNEL))
                 .thenReturn(channelParsedEntity);
 

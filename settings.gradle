@@ -2,7 +2,5 @@ rootProject.name = 'telegram-scraper'
 
 include 'common-model'
 include 'persistence'
-include 'telegram-model'
-include 'telegram'
 include 'scraper'
 

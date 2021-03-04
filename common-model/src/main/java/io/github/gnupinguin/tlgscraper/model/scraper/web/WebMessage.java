@@ -30,8 +30,6 @@ public class WebMessage {
 
     private Date publishDate;
 
-    private Date loadDate;
-
     private int viewCount;
 
 }

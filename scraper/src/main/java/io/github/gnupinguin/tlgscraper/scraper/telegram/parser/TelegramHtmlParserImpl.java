@@ -45,7 +45,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
                         int users = Integer.parseInt(usersStr);
                         if (descriptionTag.size() == 1) {
                             String description = replaceBrTags(descriptionTag);
-                            return parsedEntity(new Channel(name, title, description, users), descriptionTag);
+                            return parsedEntity(new Channel(name, title, description, users), new Date(), descriptionTag);
                         }
                     }
                 }
@@ -57,7 +57,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
     @Nonnull
     @Override
     public List<ParsedEntity<WebMessage>> parseMessages(@Nonnull String html) {
-        Date date = Date.from(OffsetDateTime.now().toInstant());
+        Date date = new Date();
         Document document = getDocument(html);
         String channel = extractChannel(document);
         if (channel == null) {
@@ -80,12 +80,11 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
                         .channel(channel)
                         .type(messageType(messageWidget))
                         .textContent(replaceBrTags(textWidget))
-                        .loadDate(date)
                         .publishDate(publishDate(messageWidget))
                         .viewCount(views)
                         .replyToMessageId(replyToMessageId(messageWidget));
                 builder = fillForwarding(messageWidget, builder);
-                return parsedEntity(builder.build(), textWidget);
+                return parsedEntity(builder.build(), date, textWidget);
             }
             return null;
         } catch (RuntimeException e) {
@@ -94,7 +93,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
         }
     }
 
-    private <T> ParsedEntity<T> parsedEntity(T entity, Elements content) {
+    private <T> ParsedEntity<T> parsedEntity(T entity, Date date, Elements content) {
         Set<String> hashTags = new HashSet<>();
         Set<String> links = new HashSet<>();
         Set<String> mentions = new HashSet<>();
@@ -102,7 +101,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
                 .filter(a -> a.attributes().hasKey("href"))
                 .forEach(a -> extractMetaInfo(hashTags, links, mentions, a));
 
-        return new ParsedEntity<>(entity, mentions, links, hashTags);
+        return new ParsedEntity<>(entity, date, mentions, links, hashTags);
     }
 
     private void extractMetaInfo(Set<String> hashTags, Set<String> links, Set<String> mentions, Element a) {
@@ -183,7 +182,6 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
             } else if (text.endsWith("M")) {
                 k = 1_000_000;
             }
-
             return (int) (Double.parseDouble(text.replaceAll("[MK]", "")) * k);
         }
         return null;

@@ -17,7 +17,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ParsedEntityConverterImplTest {
@@ -46,12 +47,12 @@ public class ParsedEntityConverterImplTest {
         assertEquals(-1L, messages.get(0).getId());
         assertEquals(MessageType.ChannelInfo, messages.get(0).getType());
         assertEquals(0, messages.get(0).getViewCount());
+        assertEquals(timestamp(), messages.get(0).getLoadDate());
+        assertEquals(timestamp(), messages.get(0).getPublishDate());
         assertNull(messages.get(0).getTextContent());
         assertNull(messages.get(0).getForwarding());
         assertNull(messages.get(0).getReplying());
         assertNull(messages.get(0).getInternalId());
-        assertTrue(messages.get(0).getLoadDate() instanceof Timestamp);
-        assertTrue(messages.get(0).getPublishDate() instanceof Timestamp);
         checkMention(parsedChannel, messages.get(0));
         checkHashTag(parsedChannel, messages.get(0));
         checkLink(parsedChannel, messages.get(0));
@@ -140,6 +141,7 @@ public class ParsedEntityConverterImplTest {
     @Nonnull
     private ParsedEntity<Channel> parsedChannel() {
         return new ParsedEntity<>(getChannel(),
+                DATE,
                 Set.of("chatMention"),
                 Set.of("chatLink"),
                 Set.of("chatHashtag"));
@@ -148,6 +150,7 @@ public class ParsedEntityConverterImplTest {
     @Nonnull
     private ParsedEntity<WebMessage> parsedMessage() {
         return new ParsedEntity<>(getWebMessage(),
+                DATE,
                 Set.of("messageMention"),
                 Set.of("messageLink"),
                 Set.of("messageHashtag"));
@@ -166,7 +169,6 @@ public class ParsedEntityConverterImplTest {
                 .replyToMessageId(3L)
                 .channel(CHANNEL)
                 .publishDate(DATE)
-                .loadDate(DATE)
                 .viewCount(32)
                 .textContent("text")
                 .type(MessageType.Text)
