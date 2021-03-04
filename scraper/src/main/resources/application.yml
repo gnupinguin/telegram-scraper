@@ -10,6 +10,11 @@ db:
   username: scraper
   password: Scraper_db!
 
+telegram:
+  limits:
+    minTimeRangeMs: 200
+    maxTimeRangeMs: 400
+
 logging:
   level:
     org:

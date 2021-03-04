@@ -5,8 +5,8 @@ import io.github.gnupinguin.tlgscraper.model.scraper.web.WebMessage;
 import io.github.gnupinguin.tlgscraper.scraper.proxy.ProxySource;
 import io.github.gnupinguin.tlgscraper.scraper.proxy.ProxySourceSelector;
 import io.github.gnupinguin.tlgscraper.scraper.proxy.UserAgentSource;
-import io.github.gnupinguin.tlgscraper.scraper.web.ParsedEntity;
-import io.github.gnupinguin.tlgscraper.scraper.web.TelegramHtmlParser;
+import io.github.gnupinguin.tlgscraper.scraper.telegram.parser.ParsedEntity;
+import io.github.gnupinguin.tlgscraper.scraper.telegram.parser.TelegramHtmlParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -20,13 +20,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 @Slf4j
 @Component
-public class MultiProxyTelegramWebClient implements TelegramWebClient {
+public class ProxiedTelegramWebClient implements TelegramWebClient {
 
     private static final String CONFIRMED_CHANNEL = "nexta_live";
     private static final int MAX_REQUESTS_COUNT = 18;
@@ -38,13 +39,13 @@ public class MultiProxyTelegramWebClient implements TelegramWebClient {
     private final HttpClient client;
     private final ProxySource proxySource;
     private final UserAgentSource userAgentSource;
-    private final Limiter limiter;
+    private final TelegramRequestLimiter limiter;
     private final TelegramHtmlParser parser;
 
-
-    public MultiProxyTelegramWebClient(@Nonnull ProxySource proxySource,
-                                       UserAgentSource userAgentSource, @Nonnull Limiter limiter,
-                                       @Nonnull TelegramHtmlParser parser) {
+    public ProxiedTelegramWebClient(@Nonnull ProxySource proxySource,
+                                    @Nonnull UserAgentSource userAgentSource,
+                                    @Nonnull TelegramRequestLimiter limiter,
+                                    @Nonnull TelegramHtmlParser parser) {
         this.proxySource = proxySource;
         this.userAgentSource = userAgentSource;
         this.limiter = limiter;
@@ -52,7 +53,6 @@ public class MultiProxyTelegramWebClient implements TelegramWebClient {
                 .proxy(new ProxySourceSelector(proxySource))
                 .build();
         this.parser = parser;
-
         userAgent = new AtomicReference<>(userAgentSource.nextUserAgent());
     }
 
@@ -64,6 +64,7 @@ public class MultiProxyTelegramWebClient implements TelegramWebClient {
                 .orElse(null);
     }
 
+    @Nonnull
     @Override
     public List<ParsedEntity<WebMessage>> getLastMessages(@Nonnull String channel, int count) {
         List<ParsedEntity<WebMessage>> result = new ArrayList<>(count);
@@ -132,9 +133,15 @@ public class MultiProxyTelegramWebClient implements TelegramWebClient {
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                 if (response.statusCode() == 200) {
                     return Optional.ofNullable(response.body());
-                } else {
-                    log.info("Unsuccessful response for {}: {},\n{}", url, response.statusCode(), response.body());
+                } if (response.statusCode() >= 500) {
+                    log.info("Unsuccessful response for {}: {}. Waiting 3s", url, response.statusCode());
+                    TimeUnit.SECONDS.sleep(3);
+                    response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                    if (response.statusCode() == 200) {
+                        return Optional.ofNullable(response.body());
+                    }
                 }
+                log.info("Unsuccessful response for {}: {},\n{}", url, response.statusCode(), response.body());
             } catch (Exception e) {
                 log.info("Error for request for {}, proxy: {}", url, proxySource.next().address(), e);
             }

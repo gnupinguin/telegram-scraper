@@ -1,4 +1,4 @@
-package io.github.gnupinguin.tlgscraper.scraper.web;
+package io.github.gnupinguin.tlgscraper.scraper.telegram.parser;
 
 import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
 import io.github.gnupinguin.tlgscraper.model.scraper.web.Channel;
@@ -26,6 +26,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
 
     private static final Pattern TELEGRAM_CHANNEL_LINK = Pattern.compile("^https://t.me/(\\w{5,32})(?:/(\\d*))?$");
 
+    @Nullable
     @Override
     public ParsedEntity<Channel> parseChannel(@Nonnull String html) {
         Document document = getDocument(html);
@@ -53,6 +54,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
         return null;
     }
 
+    @Nonnull
     @Override
     public List<ParsedEntity<WebMessage>> parseMessages(@Nonnull String html) {
         Date date = Date.from(OffsetDateTime.now().toInstant());
@@ -205,6 +207,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
         return builder;
     }
 
+    @Nullable
     private Long replyToMessageId(Element messageWidget) {
         Elements replyATag = messageWidget.getElementsByClass("tgme_widget_message_reply");
         if (replyATag.size() == 1) {

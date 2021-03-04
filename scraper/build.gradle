@@ -27,6 +27,14 @@ task restoreDb(type:JavaExec) {
     errorOutput = System.err
 }
 
+bootRun {
+    jvmArgs = [
+            "-Xmx1024m",
+            "-Xms512m",
+            "-Djdk.tls.disabledAlgorithms=TLSv1.3,SSLv3"
+    ]
+}
+
 task localRun(type:JavaExec) {
     group = 'application'
     main 'org.textindexer.extractor.AppStateRestoration'
@@ -34,5 +42,3 @@ task localRun(type:JavaExec) {
     standardInput = System.in
     errorOutput = System.err
 }
-
-

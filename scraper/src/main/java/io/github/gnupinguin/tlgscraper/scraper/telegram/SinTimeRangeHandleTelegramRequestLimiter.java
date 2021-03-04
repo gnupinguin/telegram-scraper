@@ -1,29 +1,36 @@
 package io.github.gnupinguin.tlgscraper.scraper.telegram;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
-@RequiredArgsConstructor
-public class TimeRangeHandleLimiter implements Limiter {
+@Component
+public class SinTimeRangeHandleTelegramRequestLimiter implements TelegramRequestLimiter {
 
     private final Lock lock = new ReentrantLock();
     private volatile boolean methodWasCalled = false;
     private volatile long startTime =  System.currentTimeMillis();
 
-    private final long timeRange;
+    private final long timeRangeMin;
+    private final long timeRangeStep;
+
+    public SinTimeRangeHandleTelegramRequestLimiter(TelegramLimitsConfiguration configuration) {
+        this.timeRangeMin = configuration.getMinTimeRangeMs();
+        this.timeRangeStep = configuration.getMaxTimeRangeMs() - timeRangeMin;
+        assert timeRangeStep >= 0;
+    }
 
     @Override
     public <T> T withLimit(Supplier<T> handle) {
-        final long currentRange = currentRangeMills();
         try {
             lock.lock();
-            if (!isExpiredRange(currentRange)) {
+            long awaiting = calculateAwaiting();
+            if (awaiting > 0) {
                 if (methodWasCalled) {
-                    TimeUnit.MILLISECONDS.sleep(timeRange - currentRange);
+                    TimeUnit.MILLISECONDS.sleep(awaiting);
                     methodWasCalled = false;
                     startTime = System.currentTimeMillis();
                 }
@@ -40,12 +47,10 @@ public class TimeRangeHandleLimiter implements Limiter {
         }
     }
 
-    private boolean isExpiredRange(long currentRange) {
-        return currentRange > timeRange;
-    }
-
-    private long currentRangeMills() {
-        return System.currentTimeMillis() - startTime;
+    private long calculateAwaiting(){
+        long now = System.currentTimeMillis();
+        long end = (long)(startTime + timeRangeMin + Math.abs(Math.sin(now)) * timeRangeStep);
+        return end - now;
     }
 
 }

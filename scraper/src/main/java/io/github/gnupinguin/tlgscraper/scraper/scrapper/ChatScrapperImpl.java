@@ -5,7 +5,7 @@ import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
 import io.github.gnupinguin.tlgscraper.model.scraper.web.Channel;
 import io.github.gnupinguin.tlgscraper.model.scraper.web.WebMessage;
 import io.github.gnupinguin.tlgscraper.scraper.telegram.TelegramWebClient;
-import io.github.gnupinguin.tlgscraper.scraper.web.ParsedEntity;
+import io.github.gnupinguin.tlgscraper.scraper.telegram.parser.ParsedEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

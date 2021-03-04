@@ -1,4 +1,4 @@
-package io.github.gnupinguin.tlgscraper.scraper.web;
+package io.github.gnupinguin.tlgscraper.scraper.telegram.parser;
 
 import io.github.gnupinguin.tlgscraper.model.scraper.web.WebMessage;
 import org.junit.Before;

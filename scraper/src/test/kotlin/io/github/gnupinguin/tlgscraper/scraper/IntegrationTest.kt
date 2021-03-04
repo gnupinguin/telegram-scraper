@@ -1,5 +1,6 @@
 package io.github.gnupinguin.tlgscraper.scraper
 
+import io.github.gnupinguin.tlgscraper.scraper.proxy.TorProxySource
 import io.github.gnupinguin.tlgscraper.scraper.telegram.TelegramWebClient
 import io.github.gnupinguin.tlgscraper.scraper.utils.Profiles
 import org.junit.Assert.*
@@ -18,6 +19,9 @@ class IntegrationTest {
     @Autowired
     lateinit var telegramWebClient: TelegramWebClient
 
+    @Autowired
+    lateinit var torProxySource: TorProxySource;
+
     @Test
     fun testChannelFound() {
         val channel = telegramWebClient.searchChannel("nexta_live")
@@ -30,6 +34,11 @@ class IntegrationTest {
         val messages = telegramWebClient.getLastMessages("nexta_live", 300)
         assertNotNull(messages)
         assertTrue(messages.size >= 300)
+    }
+
+    @Test
+    fun testTorProxy() {
+        torProxySource.forceUpdate();
     }
 
 }
