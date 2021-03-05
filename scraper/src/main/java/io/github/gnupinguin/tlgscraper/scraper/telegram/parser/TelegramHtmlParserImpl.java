@@ -114,7 +114,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
             if (!text.startsWith("@") && href.length() <= 2048) {
                 links.add(href);
                 String mention = extractLinkMention(href);
-                if (mention != null) {
+                if (mention != null && mention.length() <= 32) {
                     mentions.add(mention);
                 }
             } else {
