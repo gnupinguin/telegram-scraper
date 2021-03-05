@@ -18,7 +18,7 @@ dependencies {
 
 task restoreDb(type:JavaExec) {
     group = 'application'
-    main 'org.textindexer.extractor.AppStateRestoration'
+    main 'io.github.gnupinguin.tlgscraper.scraper.AppStateRestoration'
     jvmArgs = [
             "-Dspring.profiles.active=local"
     ]
@@ -35,10 +35,10 @@ bootRun {
     ]
 }
 
-task localRun(type:JavaExec) {
-    group = 'application'
-    main 'org.textindexer.extractor.AppStateRestoration'
-    classpath = sourceSets.main.runtimeClasspath
-    standardInput = System.in
-    errorOutput = System.err
+task localRun {
+    bootRun.configure {
+        systemProperty "spring.profiles.active", 'local'
+    }
 }
+localRun.finalizedBy bootRun
+

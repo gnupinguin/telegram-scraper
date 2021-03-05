@@ -12,7 +12,7 @@ public class SinTimeRangeHandleTelegramRequestLimiter implements TelegramRequest
 
     private final Lock lock = new ReentrantLock();
     private volatile boolean methodWasCalled = false;
-    private volatile long startTime =  System.currentTimeMillis();
+    private volatile long startTime = System.currentTimeMillis();
 
     private final long timeRangeMin;
     private final long timeRangeStep;
@@ -49,7 +49,7 @@ public class SinTimeRangeHandleTelegramRequestLimiter implements TelegramRequest
 
     private long calculateAwaiting(){
         long now = System.currentTimeMillis();
-        long end = (long)(startTime + timeRangeMin + Math.abs(Math.sin(now)) * timeRangeStep);
+        long end = startTime + timeRangeMin + Math.round(Math.abs(Math.sin(now)) * timeRangeStep);
         return end - now;
     }
 
