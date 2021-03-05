@@ -1,14 +1,12 @@
 package io.github.gnupinguin.tlgscraper.model.scraper.web;
 
 import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Date;
 
 @Data
+@EqualsAndHashCode(of = {"id"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

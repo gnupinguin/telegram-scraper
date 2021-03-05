@@ -16,14 +16,13 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -67,15 +66,26 @@ public class ProxiedTelegramWebClient implements TelegramWebClient {
     @Nonnull
     @Override
     public List<ParsedEntity<WebMessage>> getLastMessages(@Nonnull String channel, int count) {
-        List<ParsedEntity<WebMessage>> result = new ArrayList<>(count);
-        List<ParsedEntity<WebMessage>> entities = requestMessages(channel);
+        Set<ParsedEntity<WebMessage>> result = new HashSet<>(count + 18);
+        List<ParsedEntity<WebMessage>> entities = filterRequest(result, () -> requestMessages(channel));
         while (!entities.isEmpty() && result.size() < count) {
-            Collections.reverse(entities);
             result.addAll(entities);
             ParsedEntity<WebMessage> last = entities.get(entities.size() - 1);
-            entities = requestMessages(channel, last.getEntity().getId());
+            long lastId = last.getEntity().getId();
+            entities = filterRequest(result, () -> requestMessages(channel, lastId));
         }
-        return result;
+        return new ArrayList<>(result);
+    }
+
+    @Nonnull
+    List<ParsedEntity<WebMessage>> filterRequest(Set<ParsedEntity<WebMessage>> result,
+                                                 Supplier<List<ParsedEntity<WebMessage>>> request) {
+        List<ParsedEntity<WebMessage>> parsedEntities = request.get().stream()
+                .filter(Predicate.not(result::contains))//TODO investigate situation
+                .distinct()
+                .collect(Collectors.toList());
+        Collections.reverse(parsedEntities);
+        return parsedEntities;
     }
 
     private boolean updateProxy() {
