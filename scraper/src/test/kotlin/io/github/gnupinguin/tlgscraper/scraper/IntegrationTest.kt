@@ -37,7 +37,7 @@ class IntegrationTest {
 
     @Test
     fun testTorProxy() {
-        torProxySource.forceUpdate();
+        assertTrue(torProxySource.forceUpdate())
     }
 
 }

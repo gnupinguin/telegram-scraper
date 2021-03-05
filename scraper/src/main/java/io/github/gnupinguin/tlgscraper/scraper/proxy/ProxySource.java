@@ -8,6 +8,6 @@ public interface ProxySource {
     @Nonnull
     Proxy next();
 
-    void forceUpdate();
+    boolean forceUpdate();
 
 }

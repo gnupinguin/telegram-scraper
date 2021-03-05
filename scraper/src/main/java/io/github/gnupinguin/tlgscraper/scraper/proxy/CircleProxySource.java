@@ -29,12 +29,13 @@ public class CircleProxySource implements ProxySource {
     }
 
     @Override
-    public void forceUpdate() {
+    public boolean forceUpdate() {
         int next = currentProxy.get() + 1;
         if (next >= proxies.size()) {
             next = 0;
         }
         currentProxy.set(next);
+        return true;
     }
 
 }

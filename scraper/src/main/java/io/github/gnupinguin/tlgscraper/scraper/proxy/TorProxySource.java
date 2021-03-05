@@ -26,8 +26,8 @@ public class TorProxySource implements ProxySource {
     }
 
     @Override
-    public void forceUpdate() {
-        torProxySelector.nextNode();
+    public boolean forceUpdate() {
+        return torProxySelector.nextNode();
     }
 
 }
