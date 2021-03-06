@@ -22,7 +22,7 @@
         <file>${log.directory}/index_engine.error.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- rollover daily -->
-            <fileNamePattern>${log.directory}/index_engine.error.log-%d{yyyyMMdd}.%i.gz</fileNamePattern>
+            <fileNamePattern>${log.directory}/scraper.error.log-%d{yyyyMMdd}.%i.gz</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <!-- or whenever the file size reaches limit -->
                 <maxFileSize>512MB</maxFileSize>
@@ -45,7 +45,7 @@
         <file>${log.directory}/scraper.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- rollover daily -->
-            <fileNamePattern>${log.directory}/index_engine.main.log-%d{yyyyMMdd}.%i.gz</fileNamePattern>
+            <fileNamePattern>${log.directory}/scraper.main.log-%d{yyyyMMdd}.%i.gz</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <!-- or whenever the file size reaches limit -->
                 <maxFileSize>512MB</maxFileSize>
