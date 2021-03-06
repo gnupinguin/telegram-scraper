@@ -71,7 +71,7 @@ public class ProxiedTelegramWebClient implements TelegramWebClient {
                 .orElseGet(List::of);
     }
 
-    public Optional<String> request(String url) {
+    private Optional<String> request(String url) {
         return limiter.withLimit(() -> client.sendGet(url));
     }
 
