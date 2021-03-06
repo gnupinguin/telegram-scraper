@@ -1,6 +1,6 @@
 package io.github.gnupinguin.tlgscraper.scraper
 
-import io.github.gnupinguin.tlgscraper.scraper.proxy.TorProxySource
+import io.github.gnupinguin.tlgscraper.scraper.proxy.TorProxyProvider
 import io.github.gnupinguin.tlgscraper.scraper.telegram.TelegramWebClient
 import io.github.gnupinguin.tlgscraper.scraper.utils.Profiles
 import org.junit.Assert.*
@@ -20,7 +20,7 @@ class IntegrationTest {
     lateinit var telegramWebClient: TelegramWebClient
 
     @Autowired
-    lateinit var torProxySource: TorProxySource;
+    lateinit var torProxySource: TorProxyProvider;
 
     @Test
     fun testChannelFound() {

@@ -9,12 +9,12 @@ import java.net.Proxy;
 
 @Component
 @ConditionalOnClass(TorConfiguration.class)
-public class TorProxySource implements ProxySource {
+public class TorProxyProvider implements ProxyProvider {
 
     private final NativeCommandTorNymManager torProxySelector;
     private final Proxy torProxy;
 
-    public TorProxySource(TorConfiguration torConfiguration, NativeCommandTorNymManager torProxySelector) {
+    public TorProxyProvider(TorConfiguration torConfiguration, NativeCommandTorNymManager torProxySelector) {
         this.torProxySelector = torProxySelector;
         torProxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(torConfiguration.getHost(), torConfiguration.getSocksPort()));
     }

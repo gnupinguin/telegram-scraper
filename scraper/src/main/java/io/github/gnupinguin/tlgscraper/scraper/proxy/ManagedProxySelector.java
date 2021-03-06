@@ -13,9 +13,9 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class ProxySourceSelector extends ProxySelector {
+public class ManagedProxySelector extends ProxySelector {
 
-    private final ProxySource proxySource;
+    private final ProxyProvider proxyProvider;
 
     @Override
     public void connectFailed(URI uri, SocketAddress sa, IOException e) {
@@ -24,7 +24,7 @@ public class ProxySourceSelector extends ProxySelector {
 
     @Override
     public synchronized List<Proxy> select(URI uri) {
-        return List.of(proxySource.next());
+        return List.of(proxyProvider.next());
     }
 
 }
