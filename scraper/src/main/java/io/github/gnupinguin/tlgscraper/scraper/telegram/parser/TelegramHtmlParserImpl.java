@@ -19,6 +19,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.function.Predicate.not;
 
 @Slf4j
 @Component
@@ -57,20 +60,23 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
     @Nonnull
     @Override
     public List<ParsedEntity<WebMessage>> parseMessages(@Nonnull String html) {
-        Date date = new Date();
         Document document = getDocument(html);
-        String channel = extractChannel(document);
-        if (channel == null) {
-            return Collections.emptyList();
-        }
+        return extractChannel(document)
+                .map(channel -> parseMessages(document, channel))
+                .orElseGet(List::of);
+    }
+
+    @Nonnull
+    private List<ParsedEntity<WebMessage>> parseMessages(Document document, String channel) {
+        Date date = new Date();
         return document.getElementsByClass("tgme_widget_message").stream()
-                .map(messageWidget -> parse(date, channel, messageWidget))
+                .map(messageWidget -> parseMessage(date, channel, messageWidget))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
     @Nullable
-    private ParsedEntity<WebMessage> parse(Date date, String channel, Element messageWidget) {
+    private ParsedEntity<WebMessage> parseMessage(Date date, String channel, Element messageWidget) {
         try {
             Elements textWidget = messageWidget.getElementsByClass("tgme_widget_message_text");
             Integer views = views(messageWidget);
@@ -109,35 +115,49 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
         String text = a.text();
         String href = attributes.get("href");
         if (text.startsWith("#")) {
-            hashTags.add(text.substring(1));
+            hashTags.addAll(extractHashTags(text));
         } else if (href.startsWith("http")) {
             if (!text.startsWith("@") && href.length() <= 2048) {
                 links.add(href);
-                String mention = extractLinkMention(href);
-                if (mention != null && mention.length() <= 32) {
-                    mentions.add(mention);
-                }
+                extractLinkMention(href)
+                        .ifPresent(mentions::add);
             } else {
-                mentions.add(text.substring(1));
+                mentions.addAll(extractMentions(text));
             }
         }
     }
 
-    @Nullable
-    private String extractChannel(Document document) {
-        Elements usernameTag = document.getElementsByClass("tgme_channel_info_header_username");
-        if (usernameTag.isEmpty()) {
-            return null;
-        }
-        return usernameTag.text().substring(1);
+    private Set<String> extractMentions(String mentions) {
+        return extractMentionOrHashTag(mentions, 32);
+    }
+    private Set<String> extractHashTags(String tags) {
+        return extractMentionOrHashTag(tags, 64);
     }
 
-    private long messageId(Element messageWidget) {
+    private Set<String> extractMentionOrHashTag(String e, int maxLength) {
+        return Stream.of(e.split("\\s+"))
+                .filter(s -> s.startsWith("#") || s.startsWith("@"))
+                .map(s -> s.substring(1))
+                .filter(s -> s.length() <= maxLength)
+                .filter(not(String::isEmpty))
+                .collect(Collectors.toSet());
+    }
+
+    private Optional<String> extractChannel(@Nonnull Document document) {
+        Elements usernameTag = document.getElementsByClass("tgme_channel_info_header_username");
+        if (usernameTag.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(usernameTag.text().substring(1));
+    }
+
+    private long messageId(@Nonnull Element messageWidget) {
         String messageIdStr = messageWidget.attributes().get("data-post").replaceFirst("^.*?/", "");
         return Long.parseLong(messageIdStr);
     }
 
-    private MessageType messageType(Element messageWidget) {
+    @Nonnull
+    private MessageType messageType(@Nonnull Element messageWidget) {
         Elements videos = messageWidget.getElementsByClass("tgme_widget_message_video");
         Elements photos = messageWidget.getElementsByClass("tgme_widget_message_photo");
         Elements text = messageWidget.getElementsByClass("tgme_widget_message_text");
@@ -161,7 +181,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
     }
 
     @Nullable
-    private Date publishDate(Element messageWidget) {
+    private Date publishDate(@Nonnull Element messageWidget) {
         Elements messageInfoTag = messageWidget.getElementsByClass("tgme_widget_message_info");
         Elements timeTag = messageInfoTag.select("time");
         if (timeTag.size() == 1) {
@@ -172,7 +192,8 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
         return null;
     }
 
-    private Integer views(Element messageWidget) {
+    @Nullable
+    private Integer views(@Nonnull Element messageWidget) {
         Elements viewsTag = messageWidget.getElementsByClass("tgme_widget_message_views");
         if (!viewsTag.isEmpty()) {
             String text = viewsTag.text();
@@ -206,7 +227,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
     }
 
     @Nullable
-    private Long replyToMessageId(Element messageWidget) {
+    private Long replyToMessageId(@Nonnull Element messageWidget) {
         Elements replyATag = messageWidget.getElementsByClass("tgme_widget_message_reply");
         if (replyATag.size() == 1) {
             Attributes attributes = replyATag.get(0).attributes();
@@ -227,18 +248,17 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
     }
 
     @Nonnull
-    private String replaceBrTags(Elements elements) {
+    private String replaceBrTags(@Nonnull Elements elements) {
         elements.select("br").append("\\n");
         return elements.text().replaceAll("\\\\n", "\n");
     }
 
-    @Nullable
-    private String extractLinkMention(String link) {
+    private Optional<String> extractLinkMention(@Nonnull String link) {
         Matcher matcher = TELEGRAM_CHANNEL_LINK.matcher(link);
         if (matcher.find()) {
-            return matcher.group(1);
+            return Optional.of(matcher.group(1));
         }
-        return null;
+        return Optional.empty();
     }
 
 }

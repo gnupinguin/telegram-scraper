@@ -17,6 +17,4 @@ public class ProxyClientUpdateValidatorImpl implements ProxyClientUpdateValidato
                 .orElse(false);
     }
 
-
-
 }
