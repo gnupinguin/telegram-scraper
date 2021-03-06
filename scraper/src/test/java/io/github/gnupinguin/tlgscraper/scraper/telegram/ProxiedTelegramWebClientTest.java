@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -73,6 +74,7 @@ public class ProxiedTelegramWebClientTest {
                 .thenReturn(messages);
 
         List<ParsedEntity<WebMessage>> lastMessages = telegramWebClient.getLastMessages(channelName, 1);
+        System.out.println(lastMessages);
         assertEquals(messages.get(0), lastMessages.get(1));
         assertEquals(messages.get(1), lastMessages.get(0));
     }
@@ -92,7 +94,8 @@ public class ProxiedTelegramWebClientTest {
                 .thenReturn(List.of(messages.get(1)));
 
         List<ParsedEntity<WebMessage>> lastMessages = telegramWebClient.getLastMessages(channelName, 2);
-        assertEquals(messages, lastMessages);
+        assertEquals(messages.get(0), lastMessages.get(1));
+        assertEquals(messages.get(1), lastMessages.get(0));
     }
 
     @Test
@@ -107,7 +110,7 @@ public class ProxiedTelegramWebClientTest {
         when(parser.parseMessages(response))
                 .thenReturn(List.of(messages.get(0)));
         when(parser.parseMessages(beforeMessagesResponse))
-                .thenReturn(List.of(messages.get(1)));
+                .thenReturn(List.of(messages.get(1)), List.of());//TODO Potentially it can be  reason of infinity loop. Try to filter income messages
 
         List<ParsedEntity<WebMessage>> lastMessages = telegramWebClient.getLastMessages(channelName, 2);
         assertEquals(List.of(messages.get(0)), lastMessages);
@@ -117,7 +120,7 @@ public class ProxiedTelegramWebClientTest {
        WebMessage webMessage = WebMessage.builder()
                .id(id)
                .build();
-       return new ParsedEntity<>(webMessage, null, null, null, null);
+       return new ParsedEntity<>(webMessage, new Date(), null, null, null);
     }
 
 }

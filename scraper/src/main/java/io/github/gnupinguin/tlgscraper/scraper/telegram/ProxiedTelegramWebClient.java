@@ -12,14 +12,13 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ProxiedTelegramWebClient implements TelegramWebClient {
+
+    private static final Comparator<ParsedEntity<WebMessage>> COMPARATOR = Comparator.comparing(p -> p.getEntity().getId(), Comparator.reverseOrder());
 
     private final TelegramHtmlParser parser;
     private final ProxiedHttpClient client;
@@ -36,27 +35,16 @@ public class ProxiedTelegramWebClient implements TelegramWebClient {
     @Nonnull
     @Override
     public List<ParsedEntity<WebMessage>> getLastMessages(@Nonnull String channel, int count) {
-        int initialCapacity = count + count % 18;
-        Set<ParsedEntity<WebMessage>> result = new HashSet<>(initialCapacity);
-        List<ParsedEntity<WebMessage>> entities = filterRequest(result, () -> requestMessages(channel));
+        Set<ParsedEntity<WebMessage>> result = new TreeSet<>(COMPARATOR);
+        List<ParsedEntity<WebMessage>> entities = requestMessages(channel);
         while (!entities.isEmpty() && result.size() < count) {
             result.addAll(entities);
-            ParsedEntity<WebMessage> last = entities.get(entities.size() - 1);
+            ParsedEntity<WebMessage> last = entities.get(0);
             long lastId = last.getEntity().getId();
-            entities = filterRequest(result, () -> requestMessages(channel, lastId));
+            entities = requestMessages(channel, lastId);//TODO Potentially it can be  reason of infinity loop. Try to filter income messages
         }
-        return new ArrayList<>(result);
-    }
 
-    @Nonnull
-    List<ParsedEntity<WebMessage>> filterRequest(Set<ParsedEntity<WebMessage>> result,
-                                                 Supplier<List<ParsedEntity<WebMessage>>> request) {
-        List<ParsedEntity<WebMessage>> parsedEntities = request.get().stream()
-                .filter(Predicate.not(result::contains))//TODO investigate situation
-                .distinct()
-                .collect(Collectors.toList());
-        Collections.reverse(parsedEntities);
-        return parsedEntities;
+        return new ArrayList<>(result);
     }
 
     private List<ParsedEntity<WebMessage>> requestMessages(String channel) {
