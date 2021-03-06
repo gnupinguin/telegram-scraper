@@ -42,7 +42,7 @@
 
     <!-- main log file with rolling (daily or over 1024MB) and compression -->
     <appender name="MAIN" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${log.directory}/index_engine.main.log</file>
+        <file>${log.directory}/scraper.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- rollover daily -->
             <fileNamePattern>${log.directory}/index_engine.main.log-%d{yyyyMMdd}.%i.gz</fileNamePattern>
