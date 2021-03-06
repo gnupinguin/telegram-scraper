@@ -19,7 +19,7 @@
 
     <!-- errors log file, only error and warn level -->
     <appender name="ERRORS" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${log.directory}/index_engine.error.log</file>
+        <file>${log.directory}/scraper.error.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- rollover daily -->
             <fileNamePattern>${log.directory}/scraper.error.log-%d{yyyyMMdd}.%i.gz</fileNamePattern>
