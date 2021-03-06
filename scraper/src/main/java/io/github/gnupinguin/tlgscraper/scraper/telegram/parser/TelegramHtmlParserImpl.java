@@ -38,23 +38,31 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
         Elements usersTag = document.getElementsByClass("tgme_page_extra");
         Elements descriptionTag = document.getElementsByClass("tgme_page_description");
 
-        if (titleTag.size() == 1) {
-            String name = titleTag.text().replaceFirst("^.*@", "");
-            if (channelTitleTag.size() == 1) {
-                String title = channelTitleTag.text();
-                if (usersTag.size() == 1) {
-                    String usersStr = usersTag.text().replaceAll("\\D", "");
-                    if (!usersStr.isBlank()) {
-                        int users = Integer.parseInt(usersStr);
-                        if (descriptionTag.size() == 1) {
-                            String description = replaceBrTags(descriptionTag);
-                            return parsedEntity(new Channel(name, title, description, users), new Date(), descriptionTag);
+
+        if(isLooksLikeChannel(document)) {
+            if (titleTag.size() == 1) {
+                String name = titleTag.text().replaceFirst("^.*@", "");
+                if (channelTitleTag.size() == 1) {
+                    String title = channelTitleTag.text();
+                    if (usersTag.size() == 1) {
+                        String usersStr = usersTag.text().replaceAll("\\D", "");
+                        if (!usersStr.isBlank()) {
+                            int users = Integer.parseInt(usersStr);
+                            if (descriptionTag.size() == 1) {
+                                String description = replaceBrTags(descriptionTag);
+                                return parsedEntity(new Channel(name, title, description, users), new Date(), descriptionTag);
+                            }
                         }
                     }
                 }
             }
         }
         return null;
+    }
+
+    private boolean isLooksLikeChannel(Document document) {
+        Elements channelq = document.getElementsByClass("tgme_page_action tgme_page_context_action");
+        return channelq.size() == 1 && channelq.text().contains("Preview channel");
     }
 
     @Nonnull
