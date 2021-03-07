@@ -57,5 +57,5 @@ public class TelegramHtmlParserImplTest {
         List<ParsedEntity<WebMessage>> parsedEntities = parser.parseMessages(html);
         assertTrue(parsedEntities.isEmpty());
     }
-    
+
 }

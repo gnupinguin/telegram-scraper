@@ -41,15 +41,15 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
 
         if(isLooksLikeChannel(document)) {
             if (titleTag.size() == 1) {
-                String name = titleTag.text().replaceFirst("^.*@", "");
+                String name = titleTag.text().replaceFirst("^.*@", "").trim();
                 if (channelTitleTag.size() == 1) {
-                    String title = channelTitleTag.text();
+                    String title = channelTitleTag.text().trim();
                     if (usersTag.size() == 1) {
                         String usersStr = usersTag.text().replaceAll("\\D", "");
                         if (!usersStr.isBlank()) {
                             int users = Integer.parseInt(usersStr);
                             if (descriptionTag.size() == 1) {
-                                String description = replaceBrTags(descriptionTag);
+                                String description = replaceBrTags(descriptionTag).trim();
                                 return parsedEntity(new Channel(name, title, description, users), new Date(), descriptionTag);
                             }
                         }
@@ -93,7 +93,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
                         .id(messageId(messageWidget))
                         .channel(channel)
                         .type(messageType(messageWidget))
-                        .textContent(replaceBrTags(textWidget))
+                        .textContent(replaceBrTags(textWidget).trim())
                         .publishDate(publishDate(messageWidget))
                         .viewCount(views)
                         .replyToMessageId(replyToMessageId(messageWidget));
@@ -138,6 +138,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
     private Set<String> extractMentions(String mentions) {
         return extractMentionOrHashTag(mentions, 32);
     }
+
     private Set<String> extractHashTags(String tags) {
         return extractMentionOrHashTag(tags, 64);
     }
