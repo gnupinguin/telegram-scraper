@@ -1,7 +1,9 @@
 package io.github.gnupinguin.tlgscraper.scraper;
 
+import com.pengrad.telegrambot.TelegramBot;
 import io.github.gnupinguin.tlgscraper.db.DbConfiguration;
 import io.github.gnupinguin.tlgscraper.db.orm.DbProperties;
+import io.github.gnupinguin.tlgscraper.scraper.notification.TelegramBotConfiguration;
 import io.github.gnupinguin.tlgscraper.scraper.proxy.ManagedProxySelector;
 import io.github.gnupinguin.tlgscraper.scraper.proxy.ProxyProvider;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -26,6 +28,11 @@ public class ScraperConfiguration {
         return HttpClient.newBuilder()
                 .proxy(new ManagedProxySelector(proxyProvider))
                 .build();
+    }
+
+    @Bean
+    public TelegramBot bot(TelegramBotConfiguration configuration) {
+        return new TelegramBot(configuration.getToken());
     }
 
 }

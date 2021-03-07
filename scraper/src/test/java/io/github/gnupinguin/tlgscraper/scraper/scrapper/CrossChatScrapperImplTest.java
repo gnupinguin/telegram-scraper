@@ -3,6 +3,7 @@ package io.github.gnupinguin.tlgscraper.scraper.scrapper;
 import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Mention;
 import io.github.gnupinguin.tlgscraper.model.db.Message;
+import io.github.gnupinguin.tlgscraper.scraper.notification.Notificator;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.ApplicationStorage;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.MentionQueue;
 import io.github.gnupinguin.tlgscraper.scraper.scrapper.filter.ChatFilter;
@@ -14,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -40,6 +42,9 @@ public class CrossChatScrapperImplTest {
     @Mock
     private ChatFilter filter;
 
+    @Mock
+    private Notificator notificator;
+
     @InjectMocks
     private CrossChatScrapperImpl crossChatScrapper;
 
@@ -58,6 +63,8 @@ public class CrossChatScrapperImplTest {
                 .thenReturn(CHANNEL_NAME, new String[]{null});
 
         when(filter.doFilter(chat))
+                .thenReturn(true);
+        when(notificator.approveRestoration(anyCollection()))
                 .thenReturn(true);
     }
 
@@ -103,6 +110,23 @@ public class CrossChatScrapperImplTest {
         verify(mentionQueue, times(20)).markInvalid(CHANNEL_NAME);
         verify(mentionQueue, times(21)).poll();
         verify(mentionQueue, times(1)).restore(Collections.nCopies(20, CHANNEL_NAME));
+    }
+
+    @Test
+    public void testContinueAfter20FailuresButNotApproved() {
+        ArrayList<String> channels = new ArrayList<>(Collections.nCopies(19, CHANNEL_NAME));
+        channels.add(null);
+        when(mentionQueue.poll())
+                .thenReturn(CHANNEL_NAME, channels.toArray(new String[0]));
+        when(chatScrapper.scrap(CHANNEL_NAME, 300))
+                .thenReturn(null);
+        when(notificator.approveRestoration(anyCollection()))
+                .thenReturn(false);
+        crossChatScrapper.deepScrap(List.of());
+        verify(storage, never()).save(any());
+        verify(mentionQueue, times(20)).markInvalid(CHANNEL_NAME);
+        verify(mentionQueue, times(21)).poll();
+        verify(mentionQueue, never()).restore(anyList());
     }
 
     @Test

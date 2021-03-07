@@ -1,9 +1,11 @@
 package io.github.gnupinguin.tlgscraper.scraper
 
+import io.github.gnupinguin.tlgscraper.scraper.notification.TelegramBotNotificator
 import io.github.gnupinguin.tlgscraper.scraper.proxy.TorProxyProvider
 import io.github.gnupinguin.tlgscraper.scraper.telegram.TelegramWebClient
 import io.github.gnupinguin.tlgscraper.scraper.utils.Profiles
 import org.junit.Assert.*
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,7 +22,10 @@ class IntegrationTest {
     lateinit var telegramWebClient: TelegramWebClient
 
     @Autowired
-    lateinit var torProxySource: TorProxyProvider;
+    lateinit var torProxySource: TorProxyProvider
+
+    @Autowired
+    lateinit var notificator: TelegramBotNotificator
 
     @Test
     fun testChannelFound() {
@@ -38,6 +43,12 @@ class IntegrationTest {
     @Test
     fun testTorProxy() {
         assertTrue(torProxySource.forceUpdate())
+    }
+
+    @Test
+    @Ignore
+    fun testNotification() {
+        assertTrue(notificator.approveRestoration(listOf("a", "b", "c")))
     }
 
 }

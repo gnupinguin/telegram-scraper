@@ -3,6 +3,7 @@ package io.github.gnupinguin.tlgscraper.scraper.scrapper;
 import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Mention;
 import io.github.gnupinguin.tlgscraper.model.db.Message;
+import io.github.gnupinguin.tlgscraper.scraper.notification.Notificator;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.ApplicationStorage;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.MentionQueue;
 import io.github.gnupinguin.tlgscraper.scraper.scrapper.filter.ChatFilter;
@@ -33,6 +34,7 @@ public class CrossChatScrapperImpl implements CrossChatScrapper {
     private final MentionQueue mentionQueue;
     private final ApplicationStorage storage;
     private final ChatFilter filter;
+    private final Notificator notificator;
 
     private final List<String> failedMentions = Collections.synchronizedList(new ArrayList<>(MAX_FAILED_CHANNELS_COUNT));
 
@@ -48,10 +50,16 @@ public class CrossChatScrapperImpl implements CrossChatScrapper {
 
     private boolean canContinue(@Nullable String name) {
         if (failedMentions.size() >= MAX_FAILED_CHANNELS_COUNT) {
-            mentionQueue.restore(failedMentions);
-            log.info("Many chats were not found, scrapping will be stopped");
-            log.info("Restored mentions: {}", failedMentions);
-            return false;
+            log.info("Many chats were not found");
+            if (notificator.approveRestoration(failedMentions)) {
+                log.info("Approving for channel restoration got");
+                mentionQueue.restore(failedMentions);
+                log.info("Restored mentions: {}", failedMentions);
+                return false;
+            } else {
+                log.info("Channels restoration was discarded");
+                failedMentions.clear();
+            }
         }
         return name != null;
     }
