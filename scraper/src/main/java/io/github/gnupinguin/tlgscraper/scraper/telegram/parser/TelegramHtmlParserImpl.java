@@ -4,6 +4,7 @@ import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
 import io.github.gnupinguin.tlgscraper.model.scraper.web.Channel;
 import io.github.gnupinguin.tlgscraper.model.scraper.web.WebMessage;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
@@ -50,7 +51,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
                             int users = Integer.parseInt(usersStr);
                             if (descriptionTag.size() == 1) {
                                 String description = replaceBrTags(descriptionTag).trim();
-                                return parsedEntity(new Channel(name, title, description, users), new Date(), descriptionTag);
+                                return parsedEntity(new Channel(name, title, StringUtils.substring(description, 0, 300), users), new Date(), descriptionTag);
                             }
                         }
                     }
