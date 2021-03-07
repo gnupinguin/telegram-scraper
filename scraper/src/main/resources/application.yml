@@ -15,6 +15,10 @@ telegram:
     minTimeRangeMs: 200
     maxTimeRangeMs: 400
 
+scraper:
+  messagesCount: 300
+  maxFailures: 100
+
 logging:
   level:
     org:

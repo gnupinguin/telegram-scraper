@@ -1,4 +1,4 @@
-package io.github.gnupinguin.tlgscraper.scraper.scrapper;
+package io.github.gnupinguin.tlgscraper.scraper.scraper;
 
 import io.github.gnupinguin.tlgscraper.db.queue.MentionTask;
 import io.github.gnupinguin.tlgscraper.db.queue.StatusTaskQueue;

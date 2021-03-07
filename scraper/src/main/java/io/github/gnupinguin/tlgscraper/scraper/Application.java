@@ -1,6 +1,6 @@
 package io.github.gnupinguin.tlgscraper.scraper;
 
-import io.github.gnupinguin.tlgscraper.scraper.scrapper.CrossChatScrapperImpl;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.CrossChatScrapperImpl;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;

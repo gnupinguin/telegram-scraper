@@ -2,7 +2,7 @@ package io.github.gnupinguin.tlgscraper.scraper;
 
 import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Message;
-import io.github.gnupinguin.tlgscraper.scraper.scrapper.filter.RussianBelorussianLanguageChatFilter;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.filter.RussianBelorussianLanguageChatFilter;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;

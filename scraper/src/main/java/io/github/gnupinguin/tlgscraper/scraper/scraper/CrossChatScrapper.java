@@ -1,4 +1,4 @@
-package io.github.gnupinguin.tlgscraper.scraper.scrapper;
+package io.github.gnupinguin.tlgscraper.scraper.scraper;
 
 import javax.annotation.Nonnull;
 import java.util.List;

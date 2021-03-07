@@ -1,4 +1,4 @@
-package io.github.gnupinguin.tlgscraper.scraper.scrapper;
+package io.github.gnupinguin.tlgscraper.scraper.scraper;
 
 import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Mention;
@@ -6,7 +6,7 @@ import io.github.gnupinguin.tlgscraper.model.db.Message;
 import io.github.gnupinguin.tlgscraper.scraper.notification.Notificator;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.ApplicationStorage;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.MentionQueue;
-import io.github.gnupinguin.tlgscraper.scraper.scrapper.filter.ChatFilter;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.filter.ChatFilter;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,6 +45,9 @@ public class CrossChatScrapperImplTest {
     @Mock
     private Notificator notificator;
 
+    @Mock
+    private ScraperConfiguration configuration;
+
     @InjectMocks
     private CrossChatScrapperImpl crossChatScrapper;
 
@@ -66,6 +69,10 @@ public class CrossChatScrapperImplTest {
                 .thenReturn(true);
         when(notificator.approveRestoration(anyCollection()))
                 .thenReturn(true);
+        when(configuration.getMaxFailures())
+                .thenReturn(20);
+        when(configuration.getMessagesCount())
+                .thenReturn(300);
     }
 
     @Test

@@ -1,4 +1,4 @@
-package io.github.gnupinguin.tlgscraper.scraper.scrapper;
+package io.github.gnupinguin.tlgscraper.scraper.scraper;
 
 import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Mention;
@@ -6,7 +6,7 @@ import io.github.gnupinguin.tlgscraper.model.db.Message;
 import io.github.gnupinguin.tlgscraper.scraper.notification.Notificator;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.ApplicationStorage;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.MentionQueue;
-import io.github.gnupinguin.tlgscraper.scraper.scrapper.filter.ChatFilter;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.filter.ChatFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,16 +27,14 @@ import static java.util.function.Predicate.not;
 @RequiredArgsConstructor
 public class CrossChatScrapperImpl implements CrossChatScrapper {
 
-    private static final int DEFAULT_MESSAGES_COUNT = 300;
-    private static final int MAX_FAILED_CHANNELS_COUNT = 20;
-
     private final ChatScrapper chatScrapper;
     private final MentionQueue mentionQueue;
     private final ApplicationStorage storage;
     private final ChatFilter filter;
     private final Notificator notificator;
+    private final ScraperConfiguration configuration;
 
-    private final List<String> failedMentions = Collections.synchronizedList(new ArrayList<>(MAX_FAILED_CHANNELS_COUNT));
+    private final List<String> failedMentions = Collections.synchronizedList(new ArrayList<>(100));
 
     @Override
     public void deepScrap(@Nonnull List<String> chatNames) {
@@ -49,7 +47,7 @@ public class CrossChatScrapperImpl implements CrossChatScrapper {
     }
 
     private boolean canContinue(@Nullable String name) {
-        if (failedMentions.size() >= MAX_FAILED_CHANNELS_COUNT) {
+        if (failedMentions.size() >= configuration.getMaxFailures()) {
             log.info("Many chats were not found");
             if (notificator.approveRestoration(failedMentions)) {
                 log.info("Approving for channel restoration got");
@@ -76,7 +74,7 @@ public class CrossChatScrapperImpl implements CrossChatScrapper {
             return;
         }
         log.info("Start scrapping for '{}'", channel);
-        var chat = chatScrapper.scrap(channel, DEFAULT_MESSAGES_COUNT);
+        var chat = chatScrapper.scrap(channel, configuration.getMessagesCount());
         if (chat != null) {
             failedMentions.clear();
             if (filter.doFilter(chat)) {
