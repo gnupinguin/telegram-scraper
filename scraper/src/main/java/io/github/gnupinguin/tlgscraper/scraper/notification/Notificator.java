@@ -9,4 +9,7 @@ public interface Notificator {
     boolean waitApprove(String message);
 
     boolean approveRestoration(Collection<String> channels);
+
+    void sendException(Exception e);
+
 }

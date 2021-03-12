@@ -90,7 +90,7 @@ public class ProxiedHttpClientImpl implements ProxiedHttpClient {
             HttpResponse<String> response = client.send(getRequest(url), HttpResponse.BodyHandlers.ofString());
             return Optional.ofNullable(response.body());
         } catch (Exception e) {
-            return Optional.empty();
+            throw new RuntimeException(e);
         }
     }
 

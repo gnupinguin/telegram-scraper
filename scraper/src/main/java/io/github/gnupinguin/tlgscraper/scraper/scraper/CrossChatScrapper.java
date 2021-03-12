@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface CrossChatScrapper {
 
-    void deepScrap(@Nonnull List<String> chatNames);
+    void scrapFromQueue();
 
     void plainScrap(@Nonnull List<String> chatNames);
 

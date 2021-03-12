@@ -137,20 +137,22 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
     }
 
     private Set<String> extractMentions(String mentions) {
-        return extractMentionOrHashTag(mentions, 32);
+        return extractMentionOrHashTag(mentions, 32)
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
     }
 
     private Set<String> extractHashTags(String tags) {
-        return extractMentionOrHashTag(tags, 64);
+        return extractMentionOrHashTag(tags, 64)
+                .collect(Collectors.toSet());
     }
 
-    private Set<String> extractMentionOrHashTag(String e, int maxLength) {
+    private Stream<String> extractMentionOrHashTag(String e, int maxLength) {
         return Stream.of(e.split("\\s+"))
                 .filter(s -> s.startsWith("#") || s.startsWith("@"))
                 .map(s -> s.substring(1))
                 .filter(s -> s.length() <= maxLength)
-                .filter(not(String::isEmpty))
-                .collect(Collectors.toSet());
+                .filter(not(String::isEmpty));
     }
 
     private Optional<String> extractChannel(@Nonnull Document document) {
@@ -266,7 +268,8 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
     private Optional<String> extractLinkMention(@Nonnull String link) {
         Matcher matcher = TELEGRAM_CHANNEL_LINK.matcher(link);
         if (matcher.find()) {
-            return Optional.of(matcher.group(1));
+            return Optional.of(matcher.group(1))
+                    .map(String::toLowerCase);
         }
         return Optional.empty();
     }

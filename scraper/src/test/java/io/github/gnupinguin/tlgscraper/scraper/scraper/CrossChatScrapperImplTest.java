@@ -76,12 +76,10 @@ public class CrossChatScrapperImplTest {
     }
 
     @Test
-    public void testSuccessfulDeepScrap() {
-        crossChatScrapper.deepScrap(List.of(CHANNEL_NAME));
-        verify(mentionQueue, times(1)).add(List.of(CHANNEL_NAME));
+    public void testScrapFromQueue() {
+        crossChatScrapper.scrapFromQueue();
 
         verify(storage, times(1)).save(chat);
-
         verify(mentionQueue, times(1)).add(List.of(MENTION1, MENTION2));
         verify(mentionQueue, times(2)).poll();
     }
@@ -96,11 +94,10 @@ public class CrossChatScrapperImplTest {
     }
 
     @Test
-    public void testChatNotFoundScrap() {
+    public void testChatNotFound() {
         when(chatScrapper.scrap(CHANNEL_NAME, 300))
                 .thenReturn(null);
-        crossChatScrapper.deepScrap(List.of(CHANNEL_NAME));
-        verify(mentionQueue, times(1)).add(List.of(CHANNEL_NAME));
+        crossChatScrapper.scrapFromQueue();
         verify(storage, never()).save(any());
         verify(mentionQueue, times(1)).markInvalid(CHANNEL_NAME);
         verify(mentionQueue, times(2)).poll();
@@ -112,7 +109,7 @@ public class CrossChatScrapperImplTest {
                 .thenReturn(CHANNEL_NAME);
         when(chatScrapper.scrap(CHANNEL_NAME, 300))
                 .thenReturn(null);
-        crossChatScrapper.deepScrap(List.of());
+        crossChatScrapper.scrapFromQueue();
         verify(storage, never()).save(any());
         verify(mentionQueue, times(20)).markInvalid(CHANNEL_NAME);
         verify(mentionQueue, times(21)).poll();
@@ -129,7 +126,7 @@ public class CrossChatScrapperImplTest {
                 .thenReturn(null);
         when(notificator.approveRestoration(anyCollection()))
                 .thenReturn(false);
-        crossChatScrapper.deepScrap(List.of());
+        crossChatScrapper.scrapFromQueue();
         verify(storage, never()).save(any());
         verify(mentionQueue, times(20)).markInvalid(CHANNEL_NAME);
         verify(mentionQueue, times(21)).poll();
@@ -141,7 +138,7 @@ public class CrossChatScrapperImplTest {
         when(mentionQueue.poll())
                 .thenReturn("someBoT", new String[]{null});
 
-        crossChatScrapper.deepScrap(List.of());
+        crossChatScrapper.scrapFromQueue();
         verify(storage, never()).save(any());
         verify(mentionQueue, times(2)).poll();
     }
@@ -150,7 +147,7 @@ public class CrossChatScrapperImplTest {
     public void testFilterBotNameFromMessage() {
         List<Message> messages = List.of(message(MENTION1), message("Bot"));
         chat.setMessages(messages);
-        crossChatScrapper.deepScrap(List.of());
+        crossChatScrapper.scrapFromQueue();
 
         verify(storage, times(1)).save(chat);
         verify(mentionQueue, times(1)).add(List.of(MENTION1));
@@ -161,7 +158,7 @@ public class CrossChatScrapperImplTest {
     public void testChatFilter() {
         when(filter.doFilter(chat))
                 .thenReturn(false);
-        crossChatScrapper.deepScrap(List.of());
+        crossChatScrapper.scrapFromQueue();
         verify(storage, never()).save(any());
         verify(mentionQueue, times(1)).markFiltered(CHANNEL_NAME);
         verify(mentionQueue, times(2)).poll();

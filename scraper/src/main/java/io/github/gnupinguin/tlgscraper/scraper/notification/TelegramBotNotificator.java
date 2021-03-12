@@ -8,6 +8,7 @@ import com.pengrad.telegrambot.request.GetUpdates;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
@@ -50,6 +51,11 @@ public class TelegramBotNotificator implements Notificator {
                 .map(c -> "https://t.me/" + c)
                 .collect(Collectors.joining(" \n"));
         return waitApprove("Do we need to stop scrapping and restore the chats?\n" + collect);
+    }
+
+    @Override
+    public void sendException(Exception e) {
+        send(ExceptionUtils.getStackTrace(e));
     }
 
     private List<String> waitUpdates(Date startDate) {

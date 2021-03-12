@@ -51,4 +51,10 @@ class IntegrationTest {
         assertTrue(notificator.approveRestoration(listOf("a", "b", "c")))
     }
 
+    @Test
+    fun findLowercaseName() {
+        val lastMessages = telegramWebClient.getLastMessages("MRZLKVk", 10)//should be MRZLKVK
+        assertTrue(lastMessages.size >= 10)
+    }
+
 }

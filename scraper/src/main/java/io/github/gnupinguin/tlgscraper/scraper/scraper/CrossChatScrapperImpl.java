@@ -37,9 +37,7 @@ public class CrossChatScrapperImpl implements CrossChatScrapper {
     private final List<String> failedMentions = Collections.synchronizedList(new ArrayList<>(100));
 
     @Override
-    public void deepScrap(@Nonnull List<String> chatNames) {
-        mentionQueue.add(chatNames);
-
+    public void scrapFromQueue() {
         Stream.generate(mentionQueue::poll)
                 .takeWhile(this::canContinue)
                 .forEach(this::scrap);

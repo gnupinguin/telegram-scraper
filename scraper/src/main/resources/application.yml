@@ -1,3 +1,7 @@
+app:
+  pool:
+    poolSize: 4
+
 tor:
   host: localhost
   socksPort: 9050
