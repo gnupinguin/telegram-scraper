@@ -1,5 +1,6 @@
 package io.github.gnupinguin.tlgscraper.db.orm;
 
+import io.github.gnupinguin.tlgscraper.db.pool.DbConnectionProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,13 +14,13 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class DbManager {
 
-    private final DbProperties properties;
+    private final DbConnectionProvider connectionProvider;
 
     //do not forget use batches in onStatement
     public <T> T executeBatched(String sqlQuery,
                                 Consumer<PreparedStatement> onStatement,
                                 Function<ResultSet, T> resultMapper) {
-        try (var connection = openConnection()) {
+        try (var connection = connectionProvider.getConnection()) {
             connection.setAutoCommit(false);
             try (var statement = connection.prepareStatement(sqlQuery, Statement.RETURN_GENERATED_KEYS)) {
                 onStatement.accept(statement);
@@ -38,7 +39,7 @@ public class DbManager {
     public <T> T execute(String sqlQuery,
                          Consumer<PreparedStatement> onStatement,
                          Function<ResultSet, T> resultMapper) {
-        try (var connection = openConnection()) {
+        try (var connection = connectionProvider.getConnection()) {
             try (var statement = statement(sqlQuery, connection)) {
                 onStatement.accept(statement);
                 try (var resultSet = statement.executeQuery()) {
@@ -55,10 +56,6 @@ public class DbManager {
         PreparedStatement preparedStatement = connection.prepareStatement(sqlQuery);
         preparedStatement.setQueryTimeout(60);
         return preparedStatement;
-    }
-
-    private Connection openConnection() throws SQLException {
-        return DriverManager.getConnection(properties.getUrl(), properties.getUsername(), properties.getPassword());
     }
 
 }

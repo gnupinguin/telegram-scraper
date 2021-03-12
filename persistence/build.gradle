@@ -3,6 +3,7 @@ description = 'Scraper Data Layer'
 dependencies {
     compile project(':common-model')
     implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.18'
+    implementation 'com.zaxxer:HikariCP:4.0.3'
     compileOnly group: 'org.springframework', name: 'spring-context', version: '5.2.12.RELEASE'
 
     testCompile "org.testcontainers:testcontainers:1.15.0"

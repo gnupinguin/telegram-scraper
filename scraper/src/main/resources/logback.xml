@@ -58,6 +58,10 @@
             <pattern>${defaultPattern}</pattern>
         </encoder>
     </appender>
+
+    <logger name="com.zaxxer.hikari.pool" level="info"/>
+
+
     <root level="debug">
         <appender-ref ref="MAIN"/>
         <appender-ref ref="ERRORS"/>
