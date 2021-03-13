@@ -17,6 +17,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,6 +38,8 @@ public class CrossChatScrapperImpl implements CrossChatScrapper {
     private final ScraperConfiguration configuration;
 
     private final List<String> failedMentions = Collections.synchronizedList(new ArrayList<>(100));
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final AtomicBoolean scrapingEnabled = new AtomicBoolean(true);
 
     @Override
     public void scrapFromQueue() {
@@ -45,19 +50,45 @@ public class CrossChatScrapperImpl implements CrossChatScrapper {
     }
 
     private boolean canContinue(@Nullable String name) {
-        if (failedMentions.size() >= configuration.getMaxFailures()) {
+        if (name != null) {
+            lock.readLock().lock();
+            try {
+                if (failedMentions.size() < configuration.getMaxFailures()) {
+                    return true;
+                }
+            } finally {
+                lock.readLock().unlock();
+            }
+
+            lock.writeLock().lock();
+            try {
+                return sendNotification(name);
+            } finally {
+                lock.writeLock().unlock();
+            }
+        }
+        return false;
+    }
+
+    private boolean sendNotification(@Nonnull String name) {
+        if (scrapingEnabled.get()) {
             log.info("Many chats were not found");
             if (notificator.approveRestoration(failedMentions)) {
                 log.info("Approving for channel restoration got");
+                failedMentions.add(name);
                 mentionQueue.restore(failedMentions);
                 log.info("Restored mentions: {}", failedMentions);
+                scrapingEnabled.set(false);
                 return false;
             } else {
                 log.info("Channels restoration was discarded");
                 failedMentions.clear();
+                return true;
             }
+        } else {
+            mentionQueue.restore(List.of(name));
+            return false;
         }
-        return name != null;
     }
 
     @Override

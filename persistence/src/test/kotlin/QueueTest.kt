@@ -1,3 +1,5 @@
+import io.github.gnupinguin.tlgscraper.db.DbConfiguration
+import io.github.gnupinguin.tlgscraper.db.orm.DataSourceDbConnectionProvider
 import io.github.gnupinguin.tlgscraper.db.orm.DbManager
 import io.github.gnupinguin.tlgscraper.db.orm.DbProperties
 import io.github.gnupinguin.tlgscraper.db.orm.QueryExecutorImpl
@@ -31,7 +33,10 @@ class QueueTest {
             psqlContainer.username,
             psqlContainer.password
         )
-        val manager = DbManager(props)
+        val dbConfiguration = DbConfiguration()
+        val hikariConfig = dbConfiguration.hikariConfig(props)
+        val dataSource = dbConfiguration.hikariDataSource(hikariConfig)
+        val manager = DbManager(DataSourceDbConnectionProvider(dataSource))
         val queryExecutor = QueryExecutorImpl(manager)
 
         mentionTaskQueue = MentionTaskQueue(queryExecutor)

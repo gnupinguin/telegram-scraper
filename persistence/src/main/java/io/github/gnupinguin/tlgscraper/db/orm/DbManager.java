@@ -1,6 +1,5 @@
 package io.github.gnupinguin.tlgscraper.db.orm;
 
-import io.github.gnupinguin.tlgscraper.db.pool.DbConnectionProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

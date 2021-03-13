@@ -19,7 +19,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -111,14 +118,16 @@ public class CrossChatScrapperImplTest {
                 .thenReturn(null);
         crossChatScrapper.scrapFromQueue();
         verify(storage, never()).save(any());
+
+        //21 with current chat
         verify(mentionQueue, times(20)).markInvalid(CHANNEL_NAME);
         verify(mentionQueue, times(21)).poll();
-        verify(mentionQueue, times(1)).restore(Collections.nCopies(20, CHANNEL_NAME));
+        verify(mentionQueue, times(1)).restore(Collections.nCopies(21, CHANNEL_NAME));
     }
 
     @Test
     public void testContinueAfter20FailuresButNotApproved() {
-        ArrayList<String> channels = new ArrayList<>(Collections.nCopies(19, CHANNEL_NAME));
+        ArrayList<String> channels = new ArrayList<>(Collections.nCopies(20, CHANNEL_NAME));
         channels.add(null);
         when(mentionQueue.poll())
                 .thenReturn(CHANNEL_NAME, channels.toArray(new String[0]));
@@ -128,8 +137,8 @@ public class CrossChatScrapperImplTest {
                 .thenReturn(false);
         crossChatScrapper.scrapFromQueue();
         verify(storage, never()).save(any());
-        verify(mentionQueue, times(20)).markInvalid(CHANNEL_NAME);
-        verify(mentionQueue, times(21)).poll();
+        verify(mentionQueue, times(21)).markInvalid(CHANNEL_NAME);
+        verify(mentionQueue, times(22)).poll();
         verify(mentionQueue, never()).restore(anyList());
     }
 
@@ -162,6 +171,38 @@ public class CrossChatScrapperImplTest {
         verify(storage, never()).save(any());
         verify(mentionQueue, times(1)).markFiltered(CHANNEL_NAME);
         verify(mentionQueue, times(2)).poll();
+    }
+
+    @Test
+    public void testMultiThreading() throws Exception {
+        when(mentionQueue.poll())
+                .thenReturn(CHANNEL_NAME);
+        when(chatScrapper.scrap(CHANNEL_NAME, 300))
+                .thenReturn(null);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+
+        int threads = 2;
+        IntStream.range(0,threads).forEach(i -> pool.submit(() -> crossChatScrapper.scrapFromQueue()));
+        pool.awaitTermination(3, TimeUnit.SECONDS);
+
+        verify(storage, never()).save(any());
+
+        AtomicInteger shortListInvocations = new AtomicInteger(0);
+        AtomicInteger longListInvocations = new AtomicInteger(0);
+
+        verify(mentionQueue, times(2)).restore(argThat(list -> {
+            if (list.equals(List.of(CHANNEL_NAME))){
+                shortListInvocations.incrementAndGet();
+                return true;
+            }
+            longListInvocations.incrementAndGet();
+            assertTrue(20 <= list.size() &&  list.size() <= (20 + threads));
+            list.forEach(e -> assertEquals(e, CHANNEL_NAME));
+            return true;
+        }));
+        assertEquals(2, shortListInvocations.get());//times(2) but shortListInvocations = 2 - bug of mockito?
+        assertEquals(2, longListInvocations.get());//times(2) but longListInvocations = 2 - bug of mockito?
+        verify(notificator).approveRestoration(anyCollection());
     }
 
     @Nonnull

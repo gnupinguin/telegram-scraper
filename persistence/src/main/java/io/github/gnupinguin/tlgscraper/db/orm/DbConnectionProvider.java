@@ -1,4 +1,4 @@
-package io.github.gnupinguin.tlgscraper.db.pool;
+package io.github.gnupinguin.tlgscraper.db.orm;
 
 import java.sql.Connection;
 
