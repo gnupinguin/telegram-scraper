@@ -35,15 +35,27 @@ public class ProxiedTelegramWebClient implements TelegramWebClient {
     @Nonnull
     @Override
     public List<ParsedEntity<WebMessage>> getLastMessages(@Nonnull String channel, int count) {
+        TreeSet<ParsedEntity<WebMessage>> result = new TreeSet<>(COMPARATOR);
+        result.addAll(requestMessages(channel));
+        if (result.size() < count) {
+            result.addAll(getMessagesBefore(channel, getId(result.last()), count - result.size()));
+        }
+        return new ArrayList<>(result);
+    }
+
+    private long getId(@Nonnull ParsedEntity<WebMessage> parsedEntity) {
+        return parsedEntity.getEntity().getId();
+    }
+
+    @Nonnull
+    @Override
+    public List<ParsedEntity<WebMessage>> getMessagesBefore(@Nonnull String channel, long beforeId, int count) {
         Set<ParsedEntity<WebMessage>> result = new TreeSet<>(COMPARATOR);
-        List<ParsedEntity<WebMessage>> entities = requestMessages(channel);
+        List<ParsedEntity<WebMessage>> entities = requestMessages(channel, beforeId);
         while (!entities.isEmpty() && result.size() < count) {
             result.addAll(entities);
-            ParsedEntity<WebMessage> last = entities.get(0);
-            long lastId = last.getEntity().getId();
-            entities = requestMessages(channel, lastId);//TODO Potentially it can be  reason of infinity loop. Try to filter income messages
+            entities = requestMessages(channel, getId(entities.get(0)));//TODO Potentially it can be  reason of infinity loop. Try to filter income messages
         }
-
         return new ArrayList<>(result);
     }
 

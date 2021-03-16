@@ -3,9 +3,8 @@ package io.github.gnupinguin.tlgscraper.scraper
 import io.github.gnupinguin.tlgscraper.scraper.notification.TelegramBotNotificator
 import io.github.gnupinguin.tlgscraper.scraper.proxy.TorProxyProvider
 import io.github.gnupinguin.tlgscraper.scraper.telegram.TelegramWebClient
-import io.github.gnupinguin.tlgscraper.scraper.utils.Profiles
+import io.github.gnupinguin.tlgscraper.scraper.utils.ScraperProfiles
 import org.junit.Assert.*
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,7 +13,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 
 @SpringBootTest
-@ActiveProfiles(Profiles.LOCAL)
+@ActiveProfiles(ScraperProfiles.LOCAL, ScraperProfiles.SHORT)
 @RunWith(SpringRunner::class)
 class IntegrationTest {
 
@@ -46,15 +45,10 @@ class IntegrationTest {
     }
 
     @Test
-    @Ignore
-    fun testNotification() {
-        assertTrue(notificator.approveRestoration(listOf("a", "b", "c")))
-    }
-
-    @Test
     fun findLowercaseName() {
         val lastMessages = telegramWebClient.getLastMessages("MRZLKVk", 10)//should be MRZLKVK
         assertTrue(lastMessages.size >= 10)
     }
+
 
 }

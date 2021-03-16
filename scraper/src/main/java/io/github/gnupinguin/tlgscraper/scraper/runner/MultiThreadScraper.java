@@ -1,7 +1,7 @@
 package io.github.gnupinguin.tlgscraper.scraper.runner;
 
 import io.github.gnupinguin.tlgscraper.scraper.notification.Notificator;
-import io.github.gnupinguin.tlgscraper.scraper.scraper.CrossChatScrapper;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.CrossChatScraper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,7 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class MultiThreadScraper {
 
-    private final CrossChatScrapper scrapper;
+    private final CrossChatScraper scrapper;
     private final Notificator notificator;
     private final ApplicationPoolConfiguration poolConfiguration;
 
@@ -25,7 +25,7 @@ public class MultiThreadScraper {
                 .forEach(i -> pool.submit(() -> {
                     while (true) {
                         try {
-                            scrapper.scrapFromQueue();
+                            scrapper.scrap();
                             return;
                         } catch (Exception e) {
                             log.info("Scraper exception", e);

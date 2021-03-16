@@ -1,8 +1,8 @@
 package io.github.gnupinguin.tlgscraper.scraper;
 
-import io.github.gnupinguin.tlgscraper.db.queue.MentionTask;
-import io.github.gnupinguin.tlgscraper.db.queue.MentionTaskQueue;
 import io.github.gnupinguin.tlgscraper.db.queue.TaskStatus;
+import io.github.gnupinguin.tlgscraper.db.queue.mention.MentionTask;
+import io.github.gnupinguin.tlgscraper.db.queue.mention.MentionTaskQueueImpl;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.ApplicationStorage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
@@ -15,7 +15,7 @@ public class AppStateRestoration {
 
     public static void main(String[] args) {
         ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
-        var mentionTaskQueue = context.getBean(MentionTaskQueue.class);
+        var mentionTaskQueue = context.getBean(MentionTaskQueueImpl.class);
         var storage = context.getBean(ApplicationStorage.class);
 
         var locked = mentionTaskQueue.getLocked(100).stream()
@@ -27,11 +27,11 @@ public class AppStateRestoration {
         log.info("Chats were removed: {}", restored);
         locked.removeAll(restored);
 
-        mentionTaskQueue.updateStatuses(restored.stream()
+        mentionTaskQueue.update(restored.stream()
                 .map(m -> new MentionTask(TaskStatus.Initial, m))
                 .collect(Collectors.toList()));
 
-        mentionTaskQueue.updateStatuses(locked.stream()
+        mentionTaskQueue.update(locked.stream()
                 .map(m -> new MentionTask(TaskStatus.SuccessfullyProcessed, m))
                 .collect(Collectors.toList()));
         log.info("Chats were processed: {}", restored);

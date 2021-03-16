@@ -1,6 +1,7 @@
-package io.github.gnupinguin.tlgscraper.db.queue;
+package io.github.gnupinguin.tlgscraper.db.queue.mention;
 
 import io.github.gnupinguin.tlgscraper.db.orm.QueryExecutor;
+import io.github.gnupinguin.tlgscraper.db.queue.TaskStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -10,20 +11,9 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class MentionTaskQueue implements StatusTaskQueue<MentionTask> {
+public class MentionTaskQueueImpl implements MentionTaskQueue {
 
-    private static final String SELECT_QUERY = "with next_mention as (\n" +
-            "                        select name from mention_queue\n" +
-            "                        where status = 0\n" +
-            "                        limit ?\n" +
-            "                            for update skip locked\n" +
-            "                    )\n" +
-            "                    update mention_queue\n" +
-            "                    set\n" +
-            "                        status = 1\n" +
-            "                    from next_mention\n" +
-            "                    where mention_queue.name = next_mention.name\n" +
-            "                    returning mention_queue.status, mention_queue.name;";
+    private static final String SELECT_QUERY = "SELECT status, name FROM lock_next_mention(0, 1, ?)";
 
     private static final String INSERT_QUERY = "INSERT INTO mention_queue(name) VALUES (?) " +
             "ON CONFLICT (name) DO NOTHING;";
@@ -50,7 +40,7 @@ public class MentionTaskQueue implements StatusTaskQueue<MentionTask> {
     }
 
     @Override
-    public boolean updateStatuses(Collection<MentionTask> tasks) {
+    public boolean update(Collection<MentionTask> tasks) {
         queryExecutor.batchedUpdateQuery(UPDATE_STATUS_QUERY,
                 task -> List.of(task.getStatus().getStatus(), task.getName()),
                 tasks, null);

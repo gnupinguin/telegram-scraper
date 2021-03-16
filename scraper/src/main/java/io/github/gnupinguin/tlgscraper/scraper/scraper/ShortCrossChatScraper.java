@@ -1,14 +1,18 @@
 package io.github.gnupinguin.tlgscraper.scraper.scraper;
 
+import io.github.gnupinguin.tlgscraper.db.queue.TaskStatus;
+import io.github.gnupinguin.tlgscraper.db.queue.mention.BufferedMentionTaskQueue;
+import io.github.gnupinguin.tlgscraper.db.queue.mention.MentionTask;
 import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Mention;
 import io.github.gnupinguin.tlgscraper.model.db.Message;
 import io.github.gnupinguin.tlgscraper.scraper.notification.Notificator;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.ApplicationStorage;
-import io.github.gnupinguin.tlgscraper.scraper.persistence.MentionQueue;
 import io.github.gnupinguin.tlgscraper.scraper.scraper.filter.ChatFilter;
+import io.github.gnupinguin.tlgscraper.scraper.utils.ScraperProfiles;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
@@ -26,31 +30,33 @@ import java.util.stream.Stream;
 import static java.util.function.Predicate.not;
 
 @Slf4j
+@Profile(ScraperProfiles.SHORT)
 @Component
 @RequiredArgsConstructor
-public class CrossChatScrapperImpl implements CrossChatScrapper {
+public class ShortCrossChatScraper implements CrossChatScraper {
 
     private final ChatScrapper chatScrapper;
-    private final MentionQueue mentionQueue;
+    private final BufferedMentionTaskQueue mentionTaskQueue;
     private final ApplicationStorage storage;
     private final ChatFilter filter;
     private final Notificator notificator;
     private final ScraperConfiguration configuration;
 
-    private final List<String> failedMentions = Collections.synchronizedList(new ArrayList<>(100));
+    private final List<MentionTask> failedMentions = Collections.synchronizedList(new ArrayList<>(100));
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final AtomicBoolean scrapingEnabled = new AtomicBoolean(true);
 
     @Override
-    public void scrapFromQueue() {
-        Stream.generate(mentionQueue::poll)
+    public void scrap() {
+        Stream.generate(mentionTaskQueue::poll)
                 .takeWhile(this::canContinue)
+                .filter(not(this::isBotName))
                 .forEach(this::scrap);
         log.info("Scrapping finished");
     }
 
-    private boolean canContinue(@Nullable String name) {
-        if (name != null) {
+    private boolean canContinue(@Nullable MentionTask task) {
+        if (task != null) {
             lock.readLock().lock();
             try {
                 if (failedMentions.size() < configuration.getMaxFailures()) {
@@ -62,7 +68,7 @@ public class CrossChatScrapperImpl implements CrossChatScrapper {
 
             lock.writeLock().lock();
             try {
-                return sendNotification(name);
+                return sendNotification(task);
             } finally {
                 lock.writeLock().unlock();
             }
@@ -70,13 +76,13 @@ public class CrossChatScrapperImpl implements CrossChatScrapper {
         return false;
     }
 
-    private boolean sendNotification(@Nonnull String name) {
+    private boolean sendNotification(@Nonnull MentionTask task) {
         if (scrapingEnabled.get()) {
             log.info("Many chats were not found");
             if (notificator.approveRestoration(failedMentions)) {
                 log.info("Approving for channel restoration got");
-                failedMentions.add(name);
-                mentionQueue.restore(failedMentions);
+                failedMentions.add(task);
+                mentionTaskQueue.restore(failedMentions);
                 log.info("Restored mentions: {}", failedMentions);
                 scrapingEnabled.set(false);
                 return false;
@@ -86,52 +92,45 @@ public class CrossChatScrapperImpl implements CrossChatScrapper {
                 return true;
             }
         } else {
-            mentionQueue.restore(List.of(name));
+            mentionTaskQueue.restore(List.of(task));
             return false;
         }
     }
 
-    @Override
-    public void plainScrap(@Nonnull List<String> chatNames) {
-        chatNames.forEach(this::scrap);
-        log.info("Scrapping finished");
-    }
-
-    private void scrap(@Nonnull String channel) {
-        if (isBotName(channel)) {
-            log.info("Channel '{}' has name like a bot", channel);
-            return;
-        }
+    private void scrap(@Nonnull MentionTask task) {
+        String channel = task.getName();
         log.info("Start scrapping for '{}'", channel);
         var chat = chatScrapper.scrap(channel, configuration.getMessagesCount());
         if (chat != null) {
             failedMentions.clear();
             if (filter.doFilter(chat)) {
                 storage.save(chat);
-                mentionQueue.add(extractMentions(chat));
+                mentionTaskQueue.add(extractMentions(chat));
             } else {
                 log.info("Can not detect channel language: {}", channel);
-                mentionQueue.markFiltered(channel);
+                mentionTaskQueue.markFiltered(task);
             }
         } else {
             log.info("Channel '{}' not found", channel);
-            failedMentions.add(channel);
-            mentionQueue.markInvalid(channel);
+            failedMentions.add(task);
+            mentionTaskQueue.markInvalid(task);
         }
     }
 
-    private boolean isBotName(@Nonnull String name) {
-        return name.toLowerCase().endsWith("bot");
+    private boolean isBotName(@Nonnull MentionTask task) {
+        return task.getName()
+                .toLowerCase().endsWith("bot");
     }
 
     @Nonnull
-    private List<String> extractMentions(Chat chat) {
+    private List<MentionTask> extractMentions(Chat chat) {
         return chat.getMessages().stream()
                 .map(Message::getMentions)
                 .flatMap(Collection::stream)
                 .map(Mention::getChatName)
-                .filter(not(this::isBotName))
                 .distinct()
+                .map(name -> new MentionTask(TaskStatus.Initial, name))
+                .filter(not(this::isBotName))
                 .collect(Collectors.toList());
     }
 

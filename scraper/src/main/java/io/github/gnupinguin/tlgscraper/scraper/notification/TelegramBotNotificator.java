@@ -6,6 +6,7 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import com.pengrad.telegrambot.request.GetUpdates;
 import com.pengrad.telegrambot.request.SendMessage;
+import io.github.gnupinguin.tlgscraper.db.queue.mention.MentionTask;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -46,7 +47,7 @@ public class TelegramBotNotificator implements Notificator {
     }
 
     @Override
-    public boolean approveRestoration(Collection<String> channels) {
+    public boolean approveRestoration(Collection<MentionTask> channels) {
         String collect = channels.stream()
                 .map(c -> "https://t.me/" + c)
                 .collect(Collectors.joining(" \n"));

@@ -3,9 +3,9 @@ import io.github.gnupinguin.tlgscraper.db.orm.DataSourceDbConnectionProvider
 import io.github.gnupinguin.tlgscraper.db.orm.DbManager
 import io.github.gnupinguin.tlgscraper.db.orm.DbProperties
 import io.github.gnupinguin.tlgscraper.db.orm.QueryExecutorImpl
-import io.github.gnupinguin.tlgscraper.db.queue.MentionTask
-import io.github.gnupinguin.tlgscraper.db.queue.MentionTaskQueue
 import io.github.gnupinguin.tlgscraper.db.queue.TaskStatus
+import io.github.gnupinguin.tlgscraper.db.queue.mention.MentionTask
+import io.github.gnupinguin.tlgscraper.db.queue.mention.MentionTaskQueueImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -13,7 +13,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.PostgreSQLContainer
 
-class QueueTest {
+class MentionQueueTest {
 
     @Rule
     @JvmField
@@ -24,7 +24,7 @@ class QueueTest {
         withFileSystemBind(this::class.java.classLoader.getResource("schema")?.path, "/docker-entrypoint-initdb.d/")
     }
 
-    private lateinit var mentionTaskQueue: MentionTaskQueue
+    private lateinit var mentionTaskQueueImpl: MentionTaskQueueImpl
 
     @Before
     fun setUp() {
@@ -39,12 +39,13 @@ class QueueTest {
         val manager = DbManager(DataSourceDbConnectionProvider(dataSource))
         val queryExecutor = QueryExecutorImpl(manager)
 
-        mentionTaskQueue = MentionTaskQueue(queryExecutor)
+        mentionTaskQueueImpl =
+            MentionTaskQueueImpl(queryExecutor)
     }
 
     @Test
     fun testInitialValues() {
-        val mentions = mentionTaskQueue.poll(100)
+        val mentions = mentionTaskQueueImpl.poll(100)
 
         assertTrue(mentions.isNotEmpty())
         assertEquals(47, mentions.size)
@@ -54,47 +55,54 @@ class QueueTest {
 
     @Test
     fun testBlocks(){
-        mentionTaskQueue.poll(100)
-        val mentions = mentionTaskQueue.poll(100);
+        mentionTaskQueueImpl.poll(100)
+        val mentions = mentionTaskQueueImpl.poll(100);
         assertTrue(mentions.isEmpty())
     }
 
     @Test
     fun testInsert() {
-        mentionTaskQueue.add(listOf(
+        mentionTaskQueueImpl.add(listOf(
             MentionTask(
-                TaskStatus.Initial, "hello_test")
+                TaskStatus.Initial, "hello_test"
+            )
         ))
 
-        val mentions = mentionTaskQueue.poll(100).map{it.name}
+        val mentions = mentionTaskQueueImpl.poll(100).map{it.name}
         assertTrue(mentions.contains("hello_test"))
     }
 
     @Test
     fun testInsertDuplicate() {
         val name = "hello_test"
-        mentionTaskQueue.add(listOf(
+        mentionTaskQueueImpl.add(listOf(
             MentionTask(TaskStatus.Initial, name)
         ))
-        mentionTaskQueue.add(listOf(
+        mentionTaskQueueImpl.add(listOf(
             MentionTask(TaskStatus.Initial, name)
         ))
 
-        val mentions = mentionTaskQueue.poll(100).map{it.name}.filter { it == name }
+        val mentions = mentionTaskQueueImpl.poll(100).map{it.name}.filter { it == name }
         assertEquals(1, mentions.size)
         assertEquals(name, mentions.first())
     }
 
     @Test
     fun testUpdateStatus() {
-        val mention1 = MentionTask(TaskStatus.Initial, "hello_test1")
-        val mention2 = MentionTask(TaskStatus.Initial, "hello_test2")
+        val mention1 = MentionTask(
+            TaskStatus.Initial,
+            "hello_test1"
+        )
+        val mention2 = MentionTask(
+            TaskStatus.Initial,
+            "hello_test2"
+        )
 
         val testMentions = listOf(mention1, mention2)
-        mentionTaskQueue.add(testMentions)
-        mentionTaskQueue.updateStatuses(testMentions.map { it.status= TaskStatus.SuccessfullyProcessed; it })
+        mentionTaskQueueImpl.add(testMentions)
+        mentionTaskQueueImpl.update(testMentions.map { it.status= TaskStatus.SuccessfullyProcessed; it })
 
-        val mentions = mentionTaskQueue.poll(100)
+        val mentions = mentionTaskQueueImpl.poll(100)
             .map{it.name}
             .filter { testMentions.map {m -> m.name }.contains(it) }
         assertTrue(mentions.isEmpty())
@@ -102,8 +110,8 @@ class QueueTest {
 
     @Test
     fun testLocked() {
-        val poll = mentionTaskQueue.poll(5)
-        val locked = mentionTaskQueue.getLocked(5)
+        val poll = mentionTaskQueueImpl.poll(5)
+        val locked = mentionTaskQueueImpl.getLocked(5)
 
         assertEquals(poll, locked)
     }

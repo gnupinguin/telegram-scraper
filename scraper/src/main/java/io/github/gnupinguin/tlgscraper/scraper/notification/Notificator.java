@@ -1,5 +1,7 @@
 package io.github.gnupinguin.tlgscraper.scraper.notification;
 
+import io.github.gnupinguin.tlgscraper.db.queue.mention.MentionTask;
+
 import java.util.Collection;
 
 public interface Notificator {
@@ -8,7 +10,7 @@ public interface Notificator {
 
     boolean waitApprove(String message);
 
-    boolean approveRestoration(Collection<String> channels);
+    boolean approveRestoration(Collection<MentionTask> channels);
 
     void sendException(Exception e);
 

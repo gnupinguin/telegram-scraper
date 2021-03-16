@@ -10,4 +10,6 @@ public interface ChatScrapper {
     @Nullable
     Chat scrap(@Nonnull String channel, int count);
 
+    void scrap(@Nonnull Chat channel, long beforeMessageId, int count);
+
 }

@@ -7,6 +7,18 @@ CREATE TABLE mention_queue(
 
 CREATE INDEX mention_queue_status_idx on mention_queue (status);
 
+CREATE OR REPLACE FUNCTION lock_next_mention(actualStatus int, newStatus int, total int)
+RETURNS TABLE (name varchar(32), status integer) AS
+$func$
+BEGIN
+    RETURN QUERY
+        WITH next_mention AS (SELECT m.name FROM mention_queue AS m
+                            WHERE m.status = actualStatus LIMIT total FOR UPDATE skip locked)
+        UPDATE mention_queue
+        SET status = newStatus FROM next_mention
+        WHERE mention_queue.name = next_mention.name
+        RETURNING mention_queue.name, mention_queue.status;
+end; $func$ LANGUAGE plpgsql;
 
 INSERT INTO mention_queue(name) VALUES ('rian_ru');
 INSERT INTO mention_queue(name) VALUES ('novosty');

@@ -1,6 +1,10 @@
 package io.github.gnupinguin.tlgscraper.db.queue;
 
-public interface StatusTask {
+public interface Task<ID, E> {
+
+    ID getId();
+
+    E getEntity();
 
     TaskStatus getStatus();
 

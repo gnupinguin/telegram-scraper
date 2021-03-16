@@ -14,4 +14,7 @@ public interface ParsedEntityConverter {
     Chat convert(@Nonnull ParsedEntity<Channel> parsedChannel,
                  @Nonnull List<ParsedEntity<WebMessage>> parsedMessages);
 
+    void update(@Nonnull Chat chat,
+                @Nonnull List<ParsedEntity<WebMessage>> parsedMessages);
+
 }

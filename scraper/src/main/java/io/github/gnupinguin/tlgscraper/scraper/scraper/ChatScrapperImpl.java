@@ -31,4 +31,10 @@ public class ChatScrapperImpl implements ChatScrapper {
         return null;
     }
 
+    @Override
+    public void scrap(@Nonnull Chat channel, long beforeMessageId, int count) {
+        List<ParsedEntity<WebMessage>> parsedMessages = webClient.getMessagesBefore(channel.getName(), beforeMessageId, count);
+        converter.update(channel, parsedMessages);
+    }
+
 }

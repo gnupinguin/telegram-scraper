@@ -8,9 +8,11 @@ import io.github.gnupinguin.tlgscraper.scraper.telegram.parser.ParsedEntity;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -28,6 +30,11 @@ public class ParsedEntityConverterImpl implements ParsedEntityConverter {
         Message channelInfoMessage = channelInfoMessage(chat, parsedChannel);
         updateMessages(chat, channelInfoMessage, parsedMessages);
         return chat;
+    }
+
+    @Override
+    public void update(@Nonnull Chat chat, @Nonnull List<ParsedEntity<WebMessage>> parsedMessages) {
+        updateMessages(chat, null, parsedMessages);
     }
 
     private Chat getChat(@Nonnull ParsedEntity<Channel> parsedChannel) {
@@ -53,7 +60,7 @@ public class ParsedEntityConverterImpl implements ParsedEntityConverter {
     }
 
     private void updateMessages(@Nonnull Chat chat,
-                                @Nonnull Message chatMessage,
+                                @Nullable Message chatMessage,
                                 @Nonnull List<ParsedEntity<WebMessage>> parsedMessages) {
         List<Message> messages = getMessagesStream(chat, chatMessage, parsedMessages)
                 .peek(message -> message.getMentions().forEach(mention -> mention.setMessage(message)))
@@ -79,12 +86,12 @@ public class ParsedEntityConverterImpl implements ParsedEntityConverter {
 
     @Nonnull
     private Stream<Message> getMessagesStream(@Nonnull Chat chat,
-                                              @Nonnull Message chatMessage,
+                                              @Nullable Message chatMessage,
                                               @Nonnull List<ParsedEntity<WebMessage>> parsedMessages) {
         return Stream.concat(
                 Stream.of(chatMessage),
-                parsedMessages.stream().map(pm -> convertMessage(chat, pm))
-        );
+                parsedMessages.stream().map(pm -> convertMessage(chat, pm)))
+                .filter(Objects::nonNull);
     }
 
     @Nonnull

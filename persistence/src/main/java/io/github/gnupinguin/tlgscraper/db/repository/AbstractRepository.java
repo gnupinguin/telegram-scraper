@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+import static io.github.gnupinguin.tlgscraper.db.repository.DbTools.ID_GENERATOR_MAPPER;
+
 public abstract class AbstractRepository<E>{
 
     protected final QueryExecutor queryExecutor;
@@ -19,7 +21,7 @@ public abstract class AbstractRepository<E>{
     }
 
     protected boolean saveWithIdGeneration(String query, BiConsumer<Long, E> idConsumer, Collection<E> objects) {
-        var ids = queryExecutor.batchedUpdateQuery(query, mapper::toFields, objects, l -> (Long)l.get(0));
+        var ids = queryExecutor.batchedUpdateQuery(query, mapper::toFields, objects, ID_GENERATOR_MAPPER);
         if (!ids.isEmpty()) {
             int i = 0;
             for (E object : objects) {

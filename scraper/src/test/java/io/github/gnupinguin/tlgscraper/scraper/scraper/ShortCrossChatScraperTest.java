@@ -1,11 +1,13 @@
 package io.github.gnupinguin.tlgscraper.scraper.scraper;
 
+import io.github.gnupinguin.tlgscraper.db.queue.TaskStatus;
+import io.github.gnupinguin.tlgscraper.db.queue.mention.BufferedMentionTaskQueue;
+import io.github.gnupinguin.tlgscraper.db.queue.mention.MentionTask;
 import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Mention;
 import io.github.gnupinguin.tlgscraper.model.db.Message;
 import io.github.gnupinguin.tlgscraper.scraper.notification.Notificator;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.ApplicationStorage;
-import io.github.gnupinguin.tlgscraper.scraper.persistence.MentionQueue;
 import io.github.gnupinguin.tlgscraper.scraper.scraper.filter.ChatFilter;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +32,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CrossChatScrapperImplTest {
+public class ShortCrossChatScraperTest {
 
     private static final String CHANNEL_NAME = "channel";
 
@@ -41,7 +43,7 @@ public class CrossChatScrapperImplTest {
     private ChatScrapper chatScrapper;
 
     @Mock
-    private MentionQueue mentionQueue;
+    private BufferedMentionTaskQueue mentionQueue;
 
     @Mock
     private ApplicationStorage storage;
@@ -56,9 +58,11 @@ public class CrossChatScrapperImplTest {
     private ScraperConfiguration configuration;
 
     @InjectMocks
-    private CrossChatScrapperImpl crossChatScrapper;
+    private ShortCrossChatScraper crossChatScrapper;
 
     private Chat chat;
+
+    private MentionTask mentionTask = mentionTask(CHANNEL_NAME);
 
     @Before
     public void setUp() {
@@ -70,7 +74,7 @@ public class CrossChatScrapperImplTest {
                 .thenReturn(chat);
 
         when(mentionQueue.poll())
-                .thenReturn(CHANNEL_NAME, new String[]{null});
+                .thenReturn(mentionTask, new MentionTask[]{null});
 
         when(filter.doFilter(chat))
                 .thenReturn(true);
@@ -82,62 +86,62 @@ public class CrossChatScrapperImplTest {
                 .thenReturn(300);
     }
 
-    @Test
-    public void testScrapFromQueue() {
-        crossChatScrapper.scrapFromQueue();
+    private MentionTask mentionTask(String name) {
+        return new MentionTask(TaskStatus.SuccessfullyProcessed, name);
+    }
 
-        verify(storage, times(1)).save(chat);
-        verify(mentionQueue, times(1)).add(List.of(MENTION1, MENTION2));
-        verify(mentionQueue, times(2)).poll();
+    private MentionTask initialMentionTask(String name) {
+        return new MentionTask(TaskStatus.Initial, name);
     }
 
     @Test
-    public void testPlainScrap() {
-        crossChatScrapper.plainScrap(List.of(CHANNEL_NAME));
-        verify(mentionQueue, never()).add(List.of(CHANNEL_NAME));
-        verify(mentionQueue, never()).poll();
+    public void testScrapFromQueue() {
+        crossChatScrapper.scrap();
+
         verify(storage, times(1)).save(chat);
-        verify(mentionQueue, times(1)).add(List.of(MENTION1, MENTION2));
+        verify(mentionQueue, times(1))
+                .add(List.of(initialMentionTask(MENTION1), initialMentionTask(MENTION2)));
+        verify(mentionQueue, times(2)).poll();
     }
 
     @Test
     public void testChatNotFound() {
         when(chatScrapper.scrap(CHANNEL_NAME, 300))
                 .thenReturn(null);
-        crossChatScrapper.scrapFromQueue();
+        crossChatScrapper.scrap();
         verify(storage, never()).save(any());
-        verify(mentionQueue, times(1)).markInvalid(CHANNEL_NAME);
+        verify(mentionQueue, times(1)).markInvalid(mentionTask);
         verify(mentionQueue, times(2)).poll();
     }
 
     @Test
     public void testStopAfter20Failures() {
         when(mentionQueue.poll())
-                .thenReturn(CHANNEL_NAME);
+                .thenReturn(mentionTask);
         when(chatScrapper.scrap(CHANNEL_NAME, 300))
                 .thenReturn(null);
-        crossChatScrapper.scrapFromQueue();
+        crossChatScrapper.scrap();
         verify(storage, never()).save(any());
 
         //21 with current chat
-        verify(mentionQueue, times(20)).markInvalid(CHANNEL_NAME);
+        verify(mentionQueue, times(20)).markInvalid(mentionTask);
         verify(mentionQueue, times(21)).poll();
-        verify(mentionQueue, times(1)).restore(Collections.nCopies(21, CHANNEL_NAME));
+        verify(mentionQueue, times(1)).restore(Collections.nCopies(21, mentionTask));
     }
 
     @Test
     public void testContinueAfter20FailuresButNotApproved() {
-        ArrayList<String> channels = new ArrayList<>(Collections.nCopies(20, CHANNEL_NAME));
+        ArrayList<MentionTask> channels = new ArrayList<>(Collections.nCopies(20, mentionTask));
         channels.add(null);
         when(mentionQueue.poll())
-                .thenReturn(CHANNEL_NAME, channels.toArray(new String[0]));
+                .thenReturn(mentionTask, channels.toArray(new MentionTask[0]));
         when(chatScrapper.scrap(CHANNEL_NAME, 300))
                 .thenReturn(null);
         when(notificator.approveRestoration(anyCollection()))
                 .thenReturn(false);
-        crossChatScrapper.scrapFromQueue();
+        crossChatScrapper.scrap();
         verify(storage, never()).save(any());
-        verify(mentionQueue, times(21)).markInvalid(CHANNEL_NAME);
+        verify(mentionQueue, times(21)).markInvalid(mentionTask);
         verify(mentionQueue, times(22)).poll();
         verify(mentionQueue, never()).restore(anyList());
     }
@@ -145,9 +149,9 @@ public class CrossChatScrapperImplTest {
     @Test
     public void testFilterBotNameFromQueue() {
         when(mentionQueue.poll())
-                .thenReturn("someBoT", new String[]{null});
+                .thenReturn(mentionTask("someBoT"), new MentionTask[]{null});
 
-        crossChatScrapper.scrapFromQueue();
+        crossChatScrapper.scrap();
         verify(storage, never()).save(any());
         verify(mentionQueue, times(2)).poll();
     }
@@ -156,10 +160,10 @@ public class CrossChatScrapperImplTest {
     public void testFilterBotNameFromMessage() {
         List<Message> messages = List.of(message(MENTION1), message("Bot"));
         chat.setMessages(messages);
-        crossChatScrapper.scrapFromQueue();
+        crossChatScrapper.scrap();
 
         verify(storage, times(1)).save(chat);
-        verify(mentionQueue, times(1)).add(List.of(MENTION1));
+        verify(mentionQueue, times(1)).add(List.of(initialMentionTask(MENTION1)));
         verify(mentionQueue, times(2)).poll();
     }
 
@@ -167,22 +171,22 @@ public class CrossChatScrapperImplTest {
     public void testChatFilter() {
         when(filter.doFilter(chat))
                 .thenReturn(false);
-        crossChatScrapper.scrapFromQueue();
+        crossChatScrapper.scrap();
         verify(storage, never()).save(any());
-        verify(mentionQueue, times(1)).markFiltered(CHANNEL_NAME);
+        verify(mentionQueue, times(1)).markFiltered(mentionTask);
         verify(mentionQueue, times(2)).poll();
     }
 
     @Test
     public void testMultiThreading() throws Exception {
         when(mentionQueue.poll())
-                .thenReturn(CHANNEL_NAME);
+                .thenReturn(mentionTask);
         when(chatScrapper.scrap(CHANNEL_NAME, 300))
                 .thenReturn(null);
         ExecutorService pool = Executors.newFixedThreadPool(2);
 
         int threads = 2;
-        IntStream.range(0,threads).forEach(i -> pool.submit(() -> crossChatScrapper.scrapFromQueue()));
+        IntStream.range(0,threads).forEach(i -> pool.submit(() -> crossChatScrapper.scrap()));
         pool.awaitTermination(3, TimeUnit.SECONDS);
 
         verify(storage, never()).save(any());
@@ -191,13 +195,14 @@ public class CrossChatScrapperImplTest {
         AtomicInteger longListInvocations = new AtomicInteger(0);
 
         verify(mentionQueue, times(2)).restore(argThat(list -> {
-            if (list.equals(List.of(CHANNEL_NAME))){
+            if (list.equals(List.of(mentionTask))){
                 shortListInvocations.incrementAndGet();
                 return true;
             }
             longListInvocations.incrementAndGet();
+            System.out.println(list.size());
             assertTrue(20 <= list.size() &&  list.size() <= (20 + threads));
-            list.forEach(e -> assertEquals(e, CHANNEL_NAME));
+            list.forEach(e -> assertEquals(e, mentionTask));
             return true;
         }));
         assertEquals(2, shortListInvocations.get());//times(2) but shortListInvocations = 2 - bug of mockito?

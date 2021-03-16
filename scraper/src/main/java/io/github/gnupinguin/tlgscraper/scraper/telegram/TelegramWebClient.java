@@ -16,4 +16,7 @@ public interface TelegramWebClient {
     @Nonnull
     List<ParsedEntity<WebMessage>> getLastMessages(@Nonnull String channel, int count);
 
+    @Nonnull
+    List<ParsedEntity<WebMessage>> getMessagesBefore(@Nonnull String channel, long beforeId, int count);
+
 }
