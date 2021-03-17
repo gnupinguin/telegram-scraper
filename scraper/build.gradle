@@ -22,7 +22,7 @@ task restoreDb(type:JavaExec) {
     group = 'application'
     main 'io.github.gnupinguin.tlgscraper.scraper.AppStateRestoration'
     jvmArgs = [
-            "-Dspring.profiles.active=local"
+            "-Dspring.profiles.active=local,short"
     ]
     classpath = sourceSets.main.runtimeClasspath
     standardInput = System.in
@@ -39,7 +39,7 @@ bootRun {
 
 task localRun {
     bootRun.configure {
-        systemProperty "spring.profiles.active", 'local'
+        systemProperty "spring.profiles.active", 'local,short'
     }
 }
 localRun.finalizedBy bootRun

@@ -35,12 +35,7 @@ public class ProxiedTelegramWebClient implements TelegramWebClient {
     @Nonnull
     @Override
     public List<ParsedEntity<WebMessage>> getLastMessages(@Nonnull String channel, int count) {
-        TreeSet<ParsedEntity<WebMessage>> result = new TreeSet<>(COMPARATOR);
-        result.addAll(requestMessages(channel));
-        if (result.size() < count) {
-            result.addAll(getMessagesBefore(channel, getId(result.last()), count - result.size()));
-        }
-        return new ArrayList<>(result);
+        return getMessages(channel, requestMessages(channel), count);
     }
 
     private long getId(@Nonnull ParsedEntity<WebMessage> parsedEntity) {
@@ -50,8 +45,12 @@ public class ProxiedTelegramWebClient implements TelegramWebClient {
     @Nonnull
     @Override
     public List<ParsedEntity<WebMessage>> getMessagesBefore(@Nonnull String channel, long beforeId, int count) {
+        return getMessages(channel, requestMessages(channel, beforeId), count);
+    }
+
+    private List<ParsedEntity<WebMessage>> getMessages(@Nonnull String channel, List<ParsedEntity<WebMessage>> initMessages, int count) {
         Set<ParsedEntity<WebMessage>> result = new TreeSet<>(COMPARATOR);
-        List<ParsedEntity<WebMessage>> entities = requestMessages(channel, beforeId);
+        List<ParsedEntity<WebMessage>> entities = initMessages;
         while (!entities.isEmpty() && result.size() < count) {
             result.addAll(entities);
             entities = requestMessages(channel, getId(entities.get(0)));//TODO Potentially it can be  reason of infinity loop. Try to filter income messages

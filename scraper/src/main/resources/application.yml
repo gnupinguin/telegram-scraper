@@ -21,7 +21,7 @@ telegram:
 
 scraper:
   messagesCount: 300
-  maxFailures: 100
+  maxFailures: 500
 
 logging:
   level:
