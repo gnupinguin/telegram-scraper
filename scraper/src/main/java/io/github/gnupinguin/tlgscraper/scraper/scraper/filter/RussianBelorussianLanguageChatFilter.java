@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,36 +19,32 @@ public class RussianBelorussianLanguageChatFilter implements ChatFilter {
 
     private static final Set<Integer> BY_CHARS = belorussianAdditional();
     private static final Set<Integer> RUS_CHARS = russian();
+    private static final int MAX_OTHER_CYRILLIC_COUNT = 5;
 
     @Override
     public boolean doFilter(@Nonnull Chat chat) {
         log.info("Start language detecting");
-        Set<Character> brokenCyrillic = new HashSet<>();
-
         AtomicInteger rusChars = new AtomicInteger(0);
-        AtomicInteger otherCyrillicChars = new AtomicInteger(0);
-        AtomicInteger otherChars = new AtomicInteger(0);
-
-        chat.getMessages().stream()
+        long otherCyrillic = chat.getMessages().stream()
                 .map(Message::getTextContent)
                 .filter(Objects::nonNull)
                 .flatMapToInt(String::chars)
                 .filter(Character::isAlphabetic)
-                .forEach(c -> {
+                .filter(c -> {
                     if (RUS_CHARS.contains(c)) {
-                       rusChars.incrementAndGet();
+                        rusChars.incrementAndGet();
                     } else if (BY_CHARS.contains(c)) {
                         //ignore
-                    } else if (isCyrillic(c)) {
-                        otherCyrillicChars.incrementAndGet();
-                        brokenCyrillic.add((char) c);
                     } else {
-                        otherChars.incrementAndGet();
+                        return isCyrillic(c);
                     }
-                });
+                    return false;
+                })
+                .limit(MAX_OTHER_CYRILLIC_COUNT)
+                .count();
 
-        if (otherCyrillicChars.get() >= 5) {
-            log.info("Many other cyrillic characters: {}", brokenCyrillic );
+        if (otherCyrillic >= MAX_OTHER_CYRILLIC_COUNT) {
+            log.info("Many other cyrillic characters");
             return false;
         }
 

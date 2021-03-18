@@ -1,6 +1,6 @@
 app:
   pool:
-    poolSize: 4
+    poolSize: 6
 
 tor:
   host: localhost
