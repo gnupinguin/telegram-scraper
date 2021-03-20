@@ -15,9 +15,8 @@ import java.util.stream.Stream;
 
 @Slf4j
 @Component
-public class RussianBelorussianLanguageChatFilter implements ChatFilter {
+public class RussianLanguageChatFilter implements ChatFilter {
 
-    private static final Set<Integer> BY_CHARS = belorussianAdditional();
     private static final Set<Integer> RUS_CHARS = russian();
     private static final int MAX_OTHER_CYRILLIC_COUNT = 5;
 
@@ -33,26 +32,19 @@ public class RussianBelorussianLanguageChatFilter implements ChatFilter {
                 .filter(c -> {
                     if (RUS_CHARS.contains(c)) {
                         rusChars.incrementAndGet();
-                    } else if (!BY_CHARS.contains(c)) {
-                        return isCyrillic(c);
+                        return false;
                     }
-                    return false;
+                    return isCyrillic(c);
                 })
                 .limit(MAX_OTHER_CYRILLIC_COUNT)
                 .count();
 
-        if (otherCyrillic >= MAX_OTHER_CYRILLIC_COUNT) {
-            return false;
-        }
-
-        return rusChars.get() > 0;
+        return !isOtherCyrillic(otherCyrillic) &&
+                (rusChars.get() > 0);
     }
 
-    @Nonnull
-    private static Set<Integer> belorussianAdditional() {
-        return Stream.of('i', 'I', 'ў', 'Ў', 'Ё', 'ё', 'і', Character.toUpperCase('і'))
-                .map(Integer::valueOf)
-                .collect(Collectors.toSet());
+    private boolean isOtherCyrillic(long otherCyrillic) {
+        return otherCyrillic >= MAX_OTHER_CYRILLIC_COUNT;
     }
 
     private static Set<Integer> russian() {

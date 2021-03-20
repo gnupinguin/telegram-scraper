@@ -2,7 +2,7 @@ package io.github.gnupinguin.tlgscraper.scraper;
 
 import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Message;
-import io.github.gnupinguin.tlgscraper.scraper.scraper.filter.RussianBelorussianLanguageChatFilter;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.filter.RussianLanguageChatFilter;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -14,10 +14,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(MockitoJUnitRunner.class)
-public class RussianBelorussianLanguageChatFilterTest {
+public class RussianLanguageChatFilterTest {
 
     @InjectMocks
-    private RussianBelorussianLanguageChatFilter detector;
+    private RussianLanguageChatFilter detector;
 
     @Test
     public void testDetectRussian() {
@@ -26,7 +26,7 @@ public class RussianBelorussianLanguageChatFilterTest {
 
     @Test
     public void testDetectBelorussian() {
-        assertTrue(detector.doFilter(getChat("здароў, палітыкі ііі")));
+        assertFalse(detector.doFilter(getChat("здароў, палітыкі ііі")));
     }
 
     @Test
