@@ -33,9 +33,7 @@ public class RussianBelorussianLanguageChatFilter implements ChatFilter {
                 .filter(c -> {
                     if (RUS_CHARS.contains(c)) {
                         rusChars.incrementAndGet();
-                    } else if (BY_CHARS.contains(c)) {
-                        //ignore
-                    } else {
+                    } else if (!BY_CHARS.contains(c)) {
                         return isCyrillic(c);
                     }
                     return false;
@@ -44,7 +42,6 @@ public class RussianBelorussianLanguageChatFilter implements ChatFilter {
                 .count();
 
         if (otherCyrillic >= MAX_OTHER_CYRILLIC_COUNT) {
-            log.info("Many other cyrillic characters");
             return false;
         }
 
