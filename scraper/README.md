@@ -4,7 +4,7 @@ create dump:
 docker exec -t resources_onoTlg_1 pg_dumpall -c -U scraper > /dump.sql
 
 connect to db:
-docker exec -it resources_onoTlg_1 psql -U scraper scraperdb
+docker exec -it dumps_scraper_1 psql -U scraper scraperdb
 
 import dump:
 

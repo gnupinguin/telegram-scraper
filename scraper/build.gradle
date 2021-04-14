@@ -18,6 +18,8 @@ dependencies {
     testCompile 'org.testcontainers:postgresql:1.15.0'
 }
 
+mainClassName = "io.github.gnupinguin.tlgscraper.scraper.Application"
+
 task restoreDb(type:JavaExec) {
     group = 'application'
     main 'io.github.gnupinguin.tlgscraper.scraper.AppStateRestoration'
