@@ -4,3 +4,5 @@ include 'common-model'
 include 'persistence'
 include 'scraper'
 
+include 'analyzer'
+
