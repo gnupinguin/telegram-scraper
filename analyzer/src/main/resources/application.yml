@@ -1,0 +1,8 @@
+spark:
+  database:
+    jdbcUrl: jdbc:postgresql://localhost:5433/scraperdb
+    props:
+      user: scraper
+      password: Scraper_db!
+      driver: org.postgresql.Driver
+      fetchsize: 1000

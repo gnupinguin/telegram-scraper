@@ -1,14 +1,19 @@
 plugins {
     id 'org.springframework.boot' version '2.4.3'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-//    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id 'scala'
 }
 
-//mainClassName = 'io.github.gnupinguin.analyzer.SimpleApp'
+mainClassName = 'io.github.gnupinguin.analyzer.Application'
 
-//shadowJar {
-//    zip64 = true
-//}
+//for mixing with scala
+sourceSets.main.scala.srcDir "src/main/java"
+sourceSets.main.java.srcDirs = []
+
+shadowJar {
+    zip64 = true
+}
 
 bootRun {
     jvmArgs = [
@@ -26,8 +31,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.18'
-    compile 'org.apache.spark:spark-core_2.12:3.1.1'
-//    compile'org.apache.spark:spark-sql_2.12:3.1.1'
+    implementation 'org.apache.spark:spark-core_2.12:3.1.1'
 
 
 
@@ -35,8 +39,10 @@ dependencies {
         exclude group: "org.codehaus.janin", module: "janino"
         exclude group: "org.codehaus.janin", module: "commons-compiler"
     }
-    compile group: 'org.apache.spark', name: 'spark-mllib_2.12', version: '3.1.1'
+    implementation group: 'org.apache.spark', name: 'spark-mllib_2.12', version: '3.1.1'
     implementation group: 'com.johnsnowlabs.nlp', name: 'spark-nlp_2.12', version: '3.0.1'
+
+//    compile group: 'com.google.code.gson', name: 'gson', version: '2.6'
 //    com.johnsnowlabs.nlp:spark-nlp_2.12:3.0.0-rc11
 //    implementation group: 'com.github.master', name: 'spark-stemming_2.10', version: '0.2.1'
 

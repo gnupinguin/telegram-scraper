@@ -96,7 +96,7 @@ abstract public class AbstractPipeline<T extends Serializable> implements Serial
                 .map(mapper, getTokenizedEntityEncoder());
     }
 
-    public Dataset<T> mapRows(@Nonnull Dataset<Row> data,
+    protected Dataset<T> mapRows(@Nonnull Dataset<Row> data,
                                  @Nonnull MapFunction<Row, T> mapper) {
         return data.map(mapper, getTokenizedEntityEncoder());
     }
