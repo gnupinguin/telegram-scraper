@@ -35,11 +35,17 @@ public class MessagesSparkDataSource implements SparkDataSource {
     }
 
     private Dataset<Row> basicLoad() {
-        var chat = load("chat").select(col("id").as("chat_id"), col("name").as("channel"));
+        var chat = load("chat").select(
+                col("id").as("chat_id"),
+                col("name").as("channel"),
+                col("members")
+        );
+
         var message = load("message");
         return chat.join(message, chat.col("chat_id").$eq$eq$eq(message.col("chat_id")))
                 .where(col("message_id").notEqual(-1))
                 .where(col("type").notEqual(-1))
+                .where(col("members").geq(100_000))
                 .drop("chat_id");
     }
 

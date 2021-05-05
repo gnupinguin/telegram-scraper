@@ -41,8 +41,9 @@ class TopicCoherenceModel(override val uid: String,
     assert(array.length >= 2)
     array.slice(0, array.length - 2)
       .zipWithIndex
-      .flatMap(p => array.slice(p._2 + 1, array.length - 1)
-        .map(term => (p._1, term))) // (W_i, W_j), forall i < j
+      .flatMap(p =>
+        array.slice(p._2 + 1, array.length - 1)
+          .map(term => (p._1, term))) // (W_i, W_j), forall i < j
   }
 
   private def boolToInt(b: Boolean) = if (b) 1 else 0

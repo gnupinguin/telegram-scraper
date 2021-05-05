@@ -43,8 +43,9 @@ public class TopicPipeline implements Serializable {
 
     public Dataset<Row> apply(Dataset<Row> data) {
         Dataset<Row> res = null;
-        List<Double> coherences = new ArrayList<>(8);
-        for (int k = 10; k <= 100; k += 10) {
+        List<Double> coherences = new ArrayList<>();
+//        System.out.println("Data count:" + data.count());
+        for (int k = 2500; k <= 4000; k += 250) {
             PipelineModel pipelineModel = newPipe(k).fit(data);
 
             Dataset<Row> trained = pipelineModel.transform(data);
@@ -61,7 +62,7 @@ public class TopicPipeline implements Serializable {
             topicTerms.asNonNullable();
             spark.udf().register("ind2terms" + k, topicTerms);
 
-            var topics = ldaModel.describeTopics()
+            var topics = ldaModel.describeTopics(15)
                     .withColumn("topicTerms", topicTerms.apply(col("termIndices")));
             topics.persist();
 
@@ -73,8 +74,9 @@ public class TopicPipeline implements Serializable {
                     .agg(avg("topicCoherence").as("totalCoherence"))
                     .first().getDouble(0);
             coherences.add(totalCoherence);
+
+            System.out.println("Coherences: " + coherences);
         }
-        System.out.println("Coherences: " + coherences);
         return res;
     }
 
