@@ -30,22 +30,6 @@ public class Application {
         SparkSession spark = context.getBean(SparkSession.class);
         SparkDataSource sparkDataSource = context.getBean(SparkDataSource.class);
 
-
-//        var testData = spark.createDataFrame(List.of(
-//                RowFactory.create(1L, 1L, 1L, "Это пост Навального!", date(), date(), 1, 2),
-//                RowFactory.create(1L, 2L, 2L, "Этот пост купил Путин!", date(), date(), 1, 2),
-//                RowFactory.create(1L, 3L, 3L, "Обычный текст", date(), date(), 1, 2)
-//        ), new StructType(new StructField[]{
-//                new StructField("chat_id", DataTypes.LongType, false, Metadata.empty()),
-//                new StructField("message_id", DataTypes.LongType, false, Metadata.empty()),
-//                new StructField("internal_message_id", DataTypes.LongType, false, Metadata.empty()),
-//                new StructField("text_content", DataTypes.StringType, false, Metadata.empty()),
-//                new StructField("publish_date", DataTypes.DateType, false, Metadata.empty()),
-//                new StructField("load_date", DataTypes.DateType, false, Metadata.empty()),
-//                new StructField("type", DataTypes.IntegerType, false, Metadata.empty()),
-//                new StructField("view_count", DataTypes.IntegerType, false, Metadata.empty())
-//        }));
-
 //        createData(sparkDataSource.load(), spark);
 
 //        Dataset<Row> load = spark.read().load("/home/gnupinguin/Projects/NLP_TRAIN");
@@ -60,7 +44,7 @@ public class Application {
         data.persist();
 
         Dataset<Row> result = ldaPipeline.apply(data);
-//        result.show(false);
+        result.show();
 //        result.write().mode(SaveMode.Overwrite).save("/home/gnupinguin/Projects/NLP_TRAIN");
     }
 

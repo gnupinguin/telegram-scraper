@@ -5,8 +5,6 @@ import com.johnsnowlabs.nlp.Finisher;
 import com.johnsnowlabs.nlp.annotators.LemmatizerModel;
 import com.johnsnowlabs.nlp.annotators.Normalizer;
 import com.johnsnowlabs.nlp.annotators.sbd.pragmatic.SentenceDetector;
-import io.github.gnupinguin.analyzer.estimator.TopicCoherence;
-import io.github.gnupinguin.analyzer.estimator.TopicCoherenceModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.spark.api.java.function.MapFunction;
@@ -16,15 +14,11 @@ import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.clustering.LDA;
 import org.apache.spark.ml.clustering.LDAModel;
 import org.apache.spark.ml.feature.CountVectorizer;
-import org.apache.spark.ml.feature.CountVectorizerModel;
 import org.apache.spark.ml.feature.IDF;
 import org.apache.spark.ml.feature.StopWordsRemover;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.expressions.UserDefinedFunction;
-import org.apache.spark.sql.types.DataTypes;
 import scala.Tuple2;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,8 +26,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static org.apache.spark.sql.functions.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -44,61 +36,60 @@ public class TopicPipeline implements Serializable {
     public Dataset<Row> apply(Dataset<Row> data) {
         Dataset<Row> res = null;
         List<Double> coherences = new ArrayList<>();
-//        System.out.println("Data count:" + data.count());
-        for (int k = 2500; k <= 4000; k += 250) {
-            PipelineModel pipelineModel = newPipe(k).fit(data);
+        Dataset<Row> tfIdf = tfIdfPipe().fit(data).transform(data);
 
-            Dataset<Row> trained = pipelineModel.transform(data);
-            LDAModel ldaModel = getModel(LDAModel.class, pipelineModel);
-            String[] vocabulary = getModel(CountVectorizerModel.class, pipelineModel).vocabulary();
-            UserDefinedFunction topicTerms = udf(
-                    (scala.collection.mutable.WrappedArray<Integer> termIndices) ->
-                            scala.collection.JavaConverters.seqAsJavaList(termIndices).stream()
-                                    .map(i -> vocabulary[i])
-                                    .collect(Collectors.toList()), DataTypes.createArrayType(DataTypes.StringType)
-            );
+        for (int k = 400; k <= 1000; k += 100) {
+            LDA lda = new LDA();
+            lda
+                    .setOptimizer("online")
+                    .setK(k)
+                    .setMaxIter(20)
+                    .setSeed(123)
+                    .setFeaturesCol("tfidf")
+                    .setTopicDistributionCol("topicDistribution");
+            LDAModel ldaModel = lda.fit(tfIdf);
 
-            //
-            topicTerms.asNonNullable();
-            spark.udf().register("ind2terms" + k, topicTerms);
-
-            var topics = ldaModel.describeTopics(15)
-                    .withColumn("topicTerms", topicTerms.apply(col("termIndices")));
+            var topics = ldaModel.describeTopics(10).select("termIndices");
             topics.persist();
-
-            TopicCoherence topicCoherence = new TopicCoherence();
-            TopicCoherenceModel coherenceModel = topicCoherence.fit(trained.select(col("finished_normalized").as("normalized")));
-            res = coherenceModel.transform(topics);
-
-            var totalCoherence = res.select("topicCoherence")
-                    .agg(avg("topicCoherence").as("totalCoherence"))
-                    .first().getDouble(0);
-            coherences.add(totalCoherence);
-
-            System.out.println("Coherences: " + coherences);
         }
+
+
+
+
+//        for (int k = 400; k <= 1000; k += 100) {
+//            PipelineModel pipelineModel = newPipe(k).fit(data);
+//
+//            Dataset<Row> trained = pipelineModel.transform(data);
+//            LDAModel ldaModel = getModel(LDAModel.class, pipelineModel);
+//            String[] vocabulary = getModel(CountVectorizerModel.class, pipelineModel).vocabulary();
+//            UserDefinedFunction topicTerms = udf(
+//                    (scala.collection.mutable.WrappedArray<Integer> termIndices) ->
+//                            scala.collection.JavaConverters.seqAsJavaList(termIndices).stream()
+//                                    .map(i -> vocabulary[i])
+//                                    .collect(Collectors.toList()), DataTypes.createArrayType(DataTypes.StringType)
+//            );
+//
+//            //
+//            topicTerms.asNonNullable();
+//            spark.udf().register("ind2terms" + k, topicTerms);
+//
+//            var topics = ldaModel.describeTopics(10)
+//                    .withColumn("topicTerms", topicTerms.apply(col("termIndices")));
+//            topics.persist();
+//
+//            TopicCoherence topicCoherence = new TopicCoherence();
+//            var coherenceModel = topicCoherence.fit(trained.select(col("finished_normalized").as("normalized")));
+//            res = coherenceModel.transform(topics);
+//            res.persist();
+//
+//            var totalCoherence = res.agg(avg("topicCoherence").as("totalCoherence")).first().getDouble(0);
+//            coherences.add(totalCoherence);
+//            System.out.println("Coherences: " + coherences);
+//        }
         return res;
     }
 
-    public PipelineModel createOrGetModel(String path, Dataset<Row> data) {
-//        /home/gnupinguin/Projects/NLP_PIPE
-        try {
-            PipelineModel load = PipelineModel.load(path);
-            log.info("Pipeline was loaded");
-            return load;
-        } catch (Exception e) {
-            log.info("Pipeline will be created");
-            PipelineModel model = newPipe(2).fit(data);
-            try {
-                model.write().overwrite().save(path);
-            } catch (IOException ioException) {
-                throw new RuntimeException(ioException);
-            }
-            return model;
-        }
-    }
-
-    private Pipeline newPipe(int k) {
+    private Pipeline tfIdfPipe() {
         var documentAssembler = new DocumentAssembler();
         documentAssembler.setInputCol("text_content");
         documentAssembler.setOutputCol("document");
@@ -146,15 +137,6 @@ public class TopicPipeline implements Serializable {
                 .setInputCol("tf")
                 .setOutputCol("tfidf");
 
-        LDA lda = new LDA();
-        lda
-                .setOptimizer("online")
-                .setK(k)
-                .setMaxIter(20)
-                .setSeed(123)
-                .setFeaturesCol("tfidf")
-                .setTopicDistributionCol("topicDistribution");
-
         //Create the model
         return new Pipeline()
                 .setStages(new PipelineStage[]{
@@ -167,7 +149,6 @@ public class TopicPipeline implements Serializable {
                         stopWordsRemover,
                         countVectorizer,
                         idf,
-                        lda,
                 });
     }
 
