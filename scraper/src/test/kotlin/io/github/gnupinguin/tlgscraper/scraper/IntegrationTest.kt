@@ -13,7 +13,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 
 @SpringBootTest
-@ActiveProfiles(ScraperProfiles.LOCAL, ScraperProfiles.SHORT)
+@ActiveProfiles(ScraperProfiles.LOCAL)
 @RunWith(SpringRunner::class)
 class IntegrationTest {
 

@@ -9,10 +9,8 @@ import io.github.gnupinguin.tlgscraper.model.db.Message;
 import io.github.gnupinguin.tlgscraper.scraper.notification.Notificator;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.ApplicationStorage;
 import io.github.gnupinguin.tlgscraper.scraper.scraper.filter.ChatFilter;
-import io.github.gnupinguin.tlgscraper.scraper.utils.ScraperProfiles;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
@@ -30,7 +28,6 @@ import java.util.stream.Stream;
 import static java.util.function.Predicate.not;
 
 @Slf4j
-@Profile(ScraperProfiles.SHORT)
 @Component
 @RequiredArgsConstructor
 public class ShortCrossChatScraper implements CrossChatScraper {
