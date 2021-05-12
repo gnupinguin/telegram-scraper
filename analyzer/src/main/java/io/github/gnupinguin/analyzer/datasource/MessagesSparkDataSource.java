@@ -1,18 +1,21 @@
 package io.github.gnupinguin.analyzer.datasource;
 
-import io.github.gnupinguin.analyzer.SparkDbConfiguration;
+import io.github.gnupinguin.analyzer.configuration.Profiles;
+import io.github.gnupinguin.analyzer.configuration.SparkDbConfiguration;
 import lombok.RequiredArgsConstructor;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.springframework.stereotype.Repository;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 
 import java.util.Properties;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.date_format;
 
-@Repository
+@Profile({Profiles.REAL_DATA})
+@Component
 @RequiredArgsConstructor
 public class MessagesSparkDataSource implements SparkDataSource {
 
@@ -45,7 +48,7 @@ public class MessagesSparkDataSource implements SparkDataSource {
         return chat.join(message, chat.col("chat_id").$eq$eq$eq(message.col("chat_id")))
                 .where(col("message_id").notEqual(-1))
                 .where(col("type").notEqual(-1))
-                .where(col("members").geq(100_000))
+                .where(col("members").geq(10_000))
                 .drop("chat_id");
     }
 

@@ -6,3 +6,10 @@ spark:
       password: Scraper_db!
       driver: org.postgresql.Driver
       fetchsize: 1000
+
+logging:
+  level:
+    org:
+      springframework:
+        boot:
+          autoconfigure: ERROR

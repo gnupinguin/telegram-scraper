@@ -1,6 +1,7 @@
 package io.github.gnupinguin.analyzer.estimator
 
 import org.apache.spark.ml.Model
+import org.apache.spark.ml.linalg.SparseVector
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.sql.functions._
@@ -32,35 +33,35 @@ class TopicCoherenceModel(override val uid: String,
 
   private def heightTriangleTermsMatrix(topicTerms: Dataset[_]): DataFrame = {
     def pairsTransform = udf(heightTriangle)
-    topicTerms.select(pairsTransform(col("topicTerms")).as("topicPairs"))
+    topicTerms.select(pairsTransform(col("termIndices")).as("topicPairs"))
       .agg(collect_list("topicPairs").as("topicPairs"))
   }
 
   private def occurrencePairsTable(aggTopicTerms: DataFrame): DataFrame = {
     def pairTermsOccurrencesPerDocumentTransform = udf(pairTermsOccurrencesPerDocument)
     def aggregateTopicsTransform = udaf(TopicPairsAggregator, TopicPairsAggregator.encoderIn)
-    texts.crossJoin(aggTopicTerms).withColumn("topicStats", pairTermsOccurrencesPerDocumentTransform(col("normalized"), col("topicPairs")))
+    texts.crossJoin(aggTopicTerms).withColumn("topicStats", pairTermsOccurrencesPerDocumentTransform(col("tf"), col("topicPairs")))
       .select("topicStats").agg(aggregateTopicsTransform(col("topicStats")).as("topicStats"))
       .select(explode(col("topicStats")).as("topicStats"))
   }
 
   override def transformSchema(schema: StructType): StructType = schema.add(name = "topicCoherence", dataType = DataTypes.DoubleType, nullable = false)
 
-  private def heightTriangle: Array[String] => Array[(String, String)] = { array =>
-    assert(array.length >= 2)
-    array.slice(0, array.length - 2).zipWithIndex.flatMap {p =>
-      array.slice(p._2 + 1, array.length - 1)
+  private def heightTriangle: Array[Int] => Array[(Int, Int)] = { topicTermsIndices =>
+    assert(topicTermsIndices.length >= 2)
+    topicTermsIndices.slice(0, topicTermsIndices.length - 2).zipWithIndex.flatMap { p =>
+      topicTermsIndices.slice(p._2 + 1, topicTermsIndices.length - 1)
         .map(term => (p._1, term))
     } // (W_i, W_j), forall i < j
   }
 
   private def boolToInt(b: Boolean) = if (b) 1 else 0
 
-  def pairTermsOccurrencesPerDocument: (Array[String], Array[Array[(String, String)]]) => Array[Array[(Int, Int)]] = { (docTerms, topics) =>
+  def pairTermsOccurrencesPerDocument: (SparseVector, Array[Array[(Int, Int)]]) => Array[Array[(Int, Int)]] = { (docTerms, topics) =>
     topics.map{topicPairs =>
       topicPairs.map {p =>
-        val firstTermPresent = docTerms.contains(p._1)
-        val bothTermPresent = firstTermPresent && docTerms.contains(p._2)
+        val firstTermPresent = docTerms(p._1) > 0
+        val bothTermPresent = firstTermPresent && (docTerms(p._2) > 0)
         (boolToInt(firstTermPresent), boolToInt(bothTermPresent))
       }
     }

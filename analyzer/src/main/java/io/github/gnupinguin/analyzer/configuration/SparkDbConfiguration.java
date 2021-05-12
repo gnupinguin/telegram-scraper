@@ -1,4 +1,4 @@
-package io.github.gnupinguin.analyzer;
+package io.github.gnupinguin.analyzer.configuration;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
