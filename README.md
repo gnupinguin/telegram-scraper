@@ -27,7 +27,7 @@ telegram:
 Collected data analysis present in branch ```analyzer``` and in future will be extracted to separate project.
 Part of the future project is here: https://github.com/gnupinguin/spark-lda-coherence
 
-## Build
+## Run
 ```
 git clone https://github.com/gnupinguin/telegram-scraper.git
 cd telegram-scraper
