@@ -7,8 +7,8 @@ Collect Russian news from Telegram
 ### Configuration
 
 #### External dependencies:
-- You need installed and [configured](https://stackoverflow.com/questions/1969958/how-to-change-the-tor-exit-node-programmatically-to-get-a-new-ip) Tor
-- Configured database(PostgreSQL)
+- Installed and [configured](https://stackoverflow.com/questions/1969958/how-to-change-the-tor-exit-node-programmatically-to-get-a-new-ip) Tor
+- Configured database(PostgreSQL)(see persistence/src/main/resources/docker-compose.yml)
 
 #### Scraper config
 All scraper settings specified in scraper/src/main/resources/application.yml
@@ -27,7 +27,7 @@ telegram:
 Collected data analysis present in branch ```analyzer``` and in future will be extracted to separate project.
 Part of the future project is here: https://github.com/gnupinguin/spark-lda-coherence
 
-## Build
+## Run
 ```
 git clone https://github.com/gnupinguin/telegram-scraper.git
 cd telegram-scraper
