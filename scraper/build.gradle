@@ -7,10 +7,10 @@ dependencies {
     compile project(':persistence')
 
     implementation 'org.springframework.boot:spring-boot-starter'
-    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
-    implementation group: 'org.jsoup', name: 'jsoup', version: '1.13.1'
+    implementation 'org.jsoup:jsoup:1.13.1'
 
     implementation 'com.github.pengrad:java-telegram-bot-api:5.0.1'
 
@@ -18,11 +18,11 @@ dependencies {
     testCompile 'org.testcontainers:postgresql:1.15.0'
 }
 
-mainClassName = "io.github.gnupinguin.tlgscraper.scraper.Application"
+mainClassName = 'io.github.gnupinguin.tlgscraper.scraper.Application'
 
 task restoreDb(type:JavaExec) {
     group = 'application'
-    main 'io.github.gnupinguin.tlgscraper.scraper.AppStateRestoration'
+    main = 'io.github.gnupinguin.tlgscraper.scraper.AppStateRestoration'
     jvmArgs = [
             "-Dspring.profiles.active=local,short"
     ]
@@ -41,8 +41,9 @@ bootRun {
 
 task localRun {
     bootRun.configure {
-        systemProperty "spring.profiles.active", 'local,short'
+        systemProperty "spring.profiles.active", "local,short"
     }
 }
 localRun.finalizedBy bootRun
+
 

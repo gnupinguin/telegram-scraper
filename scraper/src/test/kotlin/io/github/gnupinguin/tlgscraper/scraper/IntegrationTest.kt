@@ -12,6 +12,11 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 
+/**
+ * Tests for checking final application configuration.
+ * It is ignored for application build.
+ */
+
 @SpringBootTest
 @ActiveProfiles(ScraperProfiles.LOCAL)
 @RunWith(SpringRunner::class)

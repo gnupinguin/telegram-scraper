@@ -23,7 +23,7 @@ import org.junit.Test
 import org.testcontainers.containers.PostgreSQLContainer
 import java.util.*
 
-class MessageTaskTest {
+class MessageTaskIntegrationTest {
 
     @Rule
     @JvmField

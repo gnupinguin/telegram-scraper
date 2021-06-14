@@ -20,7 +20,7 @@ import java.util.*
  * testcontainers/ryuk:0.3.0
  * alpine:3.5
  */
-class RepositoriesTest {
+class RepositoriesIntegrationTest {
 
     @Rule
     @JvmField

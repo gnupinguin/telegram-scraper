@@ -13,7 +13,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.testcontainers.containers.PostgreSQLContainer
 
-class MentionQueueTest {
+class MentionQueueIntegrationTest {
 
     @Rule
     @JvmField
