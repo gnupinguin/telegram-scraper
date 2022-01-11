@@ -14,8 +14,8 @@ dependencies {
 
     implementation 'com.github.pengrad:java-telegram-bot-api:5.0.1'
 
-    testCompile 'org.testcontainers:testcontainers:1.15.0'
-    testCompile 'org.testcontainers:postgresql:1.15.0'
+    testCompile 'org.testcontainers:testcontainers:1.16.2'
+    testCompile 'org.testcontainers:postgresql:1.16.2'
 }
 
 mainClassName = 'io.github.gnupinguin.tlgscraper.scraper.Application'
@@ -45,5 +45,3 @@ task localRun {
     }
 }
 localRun.finalizedBy bootRun
-
-

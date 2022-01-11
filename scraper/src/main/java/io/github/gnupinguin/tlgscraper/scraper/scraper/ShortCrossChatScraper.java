@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.function.Predicate.not;
@@ -52,6 +53,16 @@ public class ShortCrossChatScraper implements CrossChatScraper {
         log.info("Scrapping finished");
     }
 
+    @Override
+    public void scrap(int channelCount) {
+        IntStream.range(0, channelCount)
+                .mapToObj(i -> mentionTaskQueue.poll())
+                .takeWhile(this::canContinue)
+                .filter(not(this::isBotName))
+                .forEach(this::scrap);
+        log.info("Scrapping finished");
+    }
+
     private boolean canContinue(@Nullable MentionTask task) {
         if (task != null) {
             lock.readLock().lock();
@@ -64,6 +75,7 @@ public class ShortCrossChatScraper implements CrossChatScraper {
             }
 
             lock.writeLock().lock();
+            //TODO fix synchronization
             try {
                 return sendNotification(task);
             } finally {

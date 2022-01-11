@@ -21,18 +21,17 @@ public class MultiThreadScraper {
 
     public void scrap() {
         ExecutorService pool = Executors.newFixedThreadPool(poolConfiguration.getPoolSize());
-        IntStream.range(0, poolConfiguration.getPoolSize())
-                .forEach(i -> pool.submit(() -> {
-                    while (true) {
-                        try {
-                            scrapper.scrap();
-                            return;
-                        } catch (Exception e) {
-                            log.info("Scraper exception", e);
-                            notificator.sendException(e);
-                        }
-                    }
-                }));
+        IntStream.range(0, poolConfiguration.getPoolSize()).forEach(i -> pool.submit(() -> {
+            while (true) {
+                try {
+                    scrapper.scrap();
+                    return;
+                } catch (Exception e) {
+                    log.info("Scraper exception", e);
+                    notificator.sendException(e);
+                }
+            }
+        }));
     }
 
 }

@@ -4,4 +4,6 @@ public interface CrossChatScraper {
 
     void scrap();
 
+    void scrap(int channelsCount);
+
 }
