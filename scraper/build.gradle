@@ -1,6 +1,6 @@
 plugins {
-    id 'org.springframework.boot' version '2.4.3'
-    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'org.springframework.boot' version "$springBootVersion"
+    id 'io.spring.dependency-management' version "$springDependencyManagement"
 }
 
 dependencies {
@@ -10,12 +10,9 @@ dependencies {
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
-    implementation 'org.jsoup:jsoup:1.13.1'
+    implementation "org.jsoup:jsoup:$jsoupVersion"
 
-    implementation 'com.github.pengrad:java-telegram-bot-api:5.0.1'
-
-    testCompile 'org.testcontainers:testcontainers:1.16.2'
-    testCompile 'org.testcontainers:postgresql:1.16.2'
+    implementation "com.github.pengrad:java-telegram-bot-api:$telegramBotVersion"
 }
 
 mainClassName = 'io.github.gnupinguin.tlgscraper.scraper.Application'
