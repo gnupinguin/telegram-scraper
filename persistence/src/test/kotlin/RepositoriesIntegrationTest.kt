@@ -6,7 +6,7 @@ import io.github.gnupinguin.tlgscraper.db.orm.DbProperties
 import io.github.gnupinguin.tlgscraper.db.orm.QueryExecutorImpl
 import io.github.gnupinguin.tlgscraper.db.repository.*
 import io.github.gnupinguin.tlgscraper.model.db.*
-import io.github.gnupinguin.tlgscraper.model.scraper.MessageType
+import io.github.gnupinguin.tlgscraper.model.scraper.web.MessageType
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before

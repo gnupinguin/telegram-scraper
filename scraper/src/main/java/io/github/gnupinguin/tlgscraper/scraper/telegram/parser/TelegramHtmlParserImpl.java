@@ -1,8 +1,8 @@
 package io.github.gnupinguin.tlgscraper.scraper.telegram.parser;
 
-import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
-import io.github.gnupinguin.tlgscraper.model.scraper.web.Channel;
-import io.github.gnupinguin.tlgscraper.model.scraper.web.WebMessage;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.model.MessageType;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.model.WebChannel;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.model.WebMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -32,7 +32,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
 
     @Nullable
     @Override
-    public ParsedEntity<Channel> parseChannel(@Nonnull String html) {
+    public ParsedEntity<WebChannel> parseChannel(@Nonnull String html) {
         Document document = getDocument(html);
         Elements titleTag = document.getElementsByTag("title");
         Elements channelTitleTag = document.getElementsByClass("tgme_page_title");
@@ -51,7 +51,7 @@ public class TelegramHtmlParserImpl implements TelegramHtmlParser {
                             int users = Integer.parseInt(usersStr);
                             if (descriptionTag.size() == 1) {
                                 String description = replaceBrTags(descriptionTag).trim();
-                                return parsedEntity(new Channel(name, title, StringUtils.substring(description, 0, 300), users), new Date(), descriptionTag);
+                                return parsedEntity(new WebChannel(name, title, StringUtils.substring(description, 0, 300), users), new Date(), descriptionTag);
                             }
                         }
                     }

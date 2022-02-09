@@ -1,7 +1,8 @@
 package io.github.gnupinguin.tlgscraper.scraper.persistence;
 
-import io.github.gnupinguin.tlgscraper.db.repository.*;
-import io.github.gnupinguin.tlgscraper.model.db.*;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.model.Channel;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.model.Message;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -27,32 +28,32 @@ public class ApplicationStorageImpl implements ApplicationStorage {
     private final HashTagRepository hashTagRepository;
     private final ForwardingRepository forwardingRepository;
     private final ReplyingRepository replyingRepository;
-    private final ChatRepository chatRepository;
+    private final ChannelRepository channelRepository;
 
     @Override
-    public void save(@Nonnull Chat chat) {
-        if (!isChatPresent(chat)) {
-            log.info("Channel already scrapped: {}", chat);
+    public void save(@Nonnull Channel channel) {
+        if (isChannelProcessed(channel)) {
+            log.info("Channel already scrapped: {}", channel);
             return;
         }
-        chatRepository.save(chat);
-        messageRepository.save(chat.getMessages());
+        channelRepository.save(channel);
+        messageRepository.saveAll(channel.getMessages());
 
-        List<Mention> mentions = unionEntities(chat.getMessages(), Message::getMentions);
-        List<HashTag> hashtags = unionEntities(chat.getMessages(), Message::getHashTags);
-        List<Link> links = unionEntities(chat.getMessages(), Message::getLinks);
+        var mentions = unionEntities(channel.getMessages(), Message::getMentions);
+        var hashtags = unionEntities(channel.getMessages(), Message::getHashTags);
+        var links = unionEntities(channel.getMessages(), Message::getLinks);
 
-        log.info("Extracted entities for channel '{}': mentions: {}, links: {}, hashTags: {}", chat.getName(), mentions.size(), links.size(), hashtags.size());
+        log.info("Extracted entities for channel '{}': mentions: {}, links: {}, hashTags: {}", channel.getName(), mentions.size(), links.size(), hashtags.size());
 
-        mentionRepository.save(mentions);
-        hashTagRepository.save(hashtags);
-        linkRepository.save(links);
-        forwardingRepository.save(unionSingleEntities(chat.getMessages(), Message::getForwarding));
-        replyingRepository.save(unionSingleEntities(chat.getMessages(), Message::getReplying));
+        mentionRepository.saveAll(mentions);
+        hashTagRepository.saveAll(hashtags);
+        linkRepository.saveAll(links);
+        forwardingRepository.saveAll(unionSingleEntities(channel.getMessages(), Message::getForwarding));
+        replyingRepository.saveAll(unionSingleEntities(channel.getMessages(), Message::getReplying));
     }
 
-    private boolean isChatPresent(@Nonnull Chat chat) {
-        return chatRepository.getChatsByNames(List.of(chat.getName())).isEmpty();
+    private boolean isChannelProcessed(@Nonnull Channel channel) {
+        return channelRepository.getChannelByName(channel.getName()) != null;
     }
 
     private <T> List<T> unionEntities(List<Message> messages, Function<Message, Collection<T>> mapper) {
@@ -72,8 +73,8 @@ public class ApplicationStorageImpl implements ApplicationStorage {
 
     @Override
     //TODO can be replaced to single query
-    public List<String> restore(List<String> blockedMentions) {
-        List<Chat> chats = chatRepository.getChatsByNames(blockedMentions);
+    public List<String> restoreUnprocessedEntities(List<String> blockedMentions) {
+       var chats = channelRepository.getChannelsByNameIsIn(blockedMentions);
 
         var foundChatNames = getNames(chats);
 
@@ -82,12 +83,10 @@ public class ApplicationStorageImpl implements ApplicationStorage {
                 .collect(Collectors.toList());
 
         var halfProcessedChats = chats.stream()
-                .filter(chat -> messageRepository.getForChat(chat.getId()).isEmpty())
+                .filter(channel -> messageRepository.getMessagesByChannel(channel).isEmpty())
                 .collect(Collectors.toList());
 
-        chatRepository.delete(halfProcessedChats.stream()
-                .map(Chat::getId)
-                .collect(Collectors.toList()));
+        channelRepository.deleteAll(halfProcessedChats);
 
         var halfProcessedChatNames = getNames(halfProcessedChats);
         return Stream.concat(notFound.stream(), halfProcessedChatNames.stream())
@@ -95,9 +94,9 @@ public class ApplicationStorageImpl implements ApplicationStorage {
     }
 
     @Nonnull
-    private List<String> getNames(List<Chat> chats) {
+    private List<String> getNames(List<Channel> chats) {
         return chats.stream()
-                .map(Chat::getName)
+                .map(Channel::getName)
                 .collect(Collectors.toList());
     }
 

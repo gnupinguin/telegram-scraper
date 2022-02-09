@@ -1,6 +1,5 @@
 package io.github.gnupinguin.tlgscraper.model.scraper.web;
 
-import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
 import lombok.*;
 
 import java.util.Date;

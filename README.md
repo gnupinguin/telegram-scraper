@@ -59,7 +59,8 @@ All scraper settings specified in scraper [application.yml](scraper/src/main/res
 - ``db.password`` - Password for DB user
 - ``telegram.limits.minTimeRangeMs`` - min time between requests to Telegram (``t_min``). Final awaiting time will be calculated as ``T = t_min + (t_max - t_min)|sin(t)|``  
 - ``telegram.limits.maxTimeRangeMs`` - max time between requests to Telegram (``t_max``). Should be equals or greater than ``telegram.limits.minTimeRangeMs``
-- ``scraper.messagesCount`` -  messages count that scraper reads from Telegram. In general, the scraper reads a little bit more than the specified count.
+- ``scraper.channelMessagesCount`` -  messages count that scraper reads from Telegram. In general, the scraper reads a little bit more than the specified count.
+- ``scraper.fetchingMentionTasksCount`` -  count of tasks for fetching from queue for each thread.
 - ``scraper.maxFailures`` - Max errors number in a row to read info about channels. 
   Errors counter will be restored to 0 after successful attempt. 
   If unsuccessful attempts count to read info about channels will be reached ``scraper.maxFailures`` then all chats, that were marked as unreadable, will be restored as unprocessed.

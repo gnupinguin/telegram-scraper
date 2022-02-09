@@ -13,24 +13,6 @@ import javax.sql.DataSource;
 @Configuration
 public class DbConfiguration {
 
-    //TODO optimize it https://www.baeldung.com/hikaricp
-    //https://techcommunity.microsoft.com/t5/azure-database-for-postgresql/steps-to-install-and-setup-pgbouncer-connection-pooling-proxy/ba-p/730555
 
-    @Bean
-    public HikariConfig hikariConfig(DbProperties dbProperties) {
-        HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(dbProperties.getUrl());
-        config.setUsername(dbProperties.getUsername());
-        config.setPassword(dbProperties.getPassword());
-        config.addDataSourceProperty("cachePrepStmts", "true");
-        config.addDataSourceProperty("prepStmtCacheSize", "250");
-        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-        return config;
-    }
-
-    @Bean
-    public DataSource hikariDataSource(HikariConfig config) {
-        return new HikariDataSource(config);
-    }
 
 }

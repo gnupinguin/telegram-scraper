@@ -1,11 +1,11 @@
 package io.github.gnupinguin.tlgscraper.scraper
 
-import io.github.gnupinguin.tlgscraper.db.repository.ChatRepository
-import io.github.gnupinguin.tlgscraper.model.db.Chat
+
+import io.github.gnupinguin.tlgscraper.scraper.persistence.model.Channel
+import io.github.gnupinguin.tlgscraper.scraper.persistence.repository.ChannelRepository
 import io.github.gnupinguin.tlgscraper.scraper.utils.ScraperProfiles
 import org.apache.commons.lang3.RandomStringUtils
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,16 +20,16 @@ import org.springframework.test.context.junit4.SpringRunner
 class PersistenceModuleIntegrationTest {
 
     @Autowired
-    lateinit var chatRepository: ChatRepository
+    lateinit var channelRepository: ChannelRepository
 
     @Test
     fun testDb() {
         val name = RandomStringUtils.random(32)
-        val chat = Chat(null, name, "test", "test", 1, emptyList())
-        chatRepository.save(chat)
-        val list = chatRepository.getChatsByNames(listOf(name))
+        val chat = Channel(null, name, "test", "test", 1, emptyList())
+        channelRepository.save(chat)
+        val list = channelRepository.getChannelsByNameIsIn(listOf(name))
         assertEquals(1, list.size)
-        assertTrue(chatRepository.delete(listOf(list.first().id)))
+        channelRepository.delete(list.first())
     }
 
 }

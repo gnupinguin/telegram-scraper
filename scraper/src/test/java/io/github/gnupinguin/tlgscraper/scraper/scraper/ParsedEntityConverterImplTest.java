@@ -1,9 +1,10 @@
 package io.github.gnupinguin.tlgscraper.scraper.scraper;
 
-import io.github.gnupinguin.tlgscraper.model.db.*;
-import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
-import io.github.gnupinguin.tlgscraper.model.scraper.web.Channel;
-import io.github.gnupinguin.tlgscraper.model.scraper.web.WebMessage;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.model.Channel;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.model.Message;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.model.MessageType;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.model.WebChannel;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.model.WebMessage;
 import io.github.gnupinguin.tlgscraper.scraper.telegram.parser.ParsedEntity;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,14 +34,14 @@ public class ParsedEntityConverterImplTest {
     public void test() {
         var parsedChannel = parsedChannel();
         var parsedMessage = parsedMessage();
-        Chat chat = converter.convert(parsedChannel, List.of(parsedMessage));
+        var chat = converter.convert(parsedChannel, List.of(parsedMessage));
 
         assertEquals(parsedChannel.getEntity().getName(), chat.getName());
         assertEquals(parsedChannel.getEntity().getTitle(), chat.getTitle());
         assertEquals(parsedChannel.getEntity().getDescription(), chat.getDescription());
         assertEquals((Integer)parsedChannel.getEntity().getUsers(), chat.getMembers());
 
-        List<Message> messages = chat.getMessages();
+        var messages = chat.getMessages();
         assertEquals(2, messages.size());
         assertEquals(chat, messages.get(0).getChannel());
 
@@ -77,7 +78,7 @@ public class ParsedEntityConverterImplTest {
         var parsedMessage = parsedMessage();
         parsedMessage.getEntity().setReplyToMessageId(null);
 
-        Chat chat = converter.convert(parsedChannel, List.of(parsedMessage));
+        Channel chat = converter.convert(parsedChannel, List.of(parsedMessage));
 
         List<Message> messages = chat.getMessages();
         assertNull(messages.get(1).getReplying());
@@ -89,7 +90,7 @@ public class ParsedEntityConverterImplTest {
         var parsedMessage = parsedMessage();
         parsedMessage.getEntity().setForwardedFromChannel(null);
 
-        Chat chat = converter.convert(parsedChannel, List.of(parsedMessage));
+        Channel chat = converter.convert(parsedChannel, List.of(parsedMessage));
 
         List<Message> messages = chat.getMessages();
         assertNull(messages.get(1).getForwarding());
@@ -101,35 +102,35 @@ public class ParsedEntityConverterImplTest {
     }
 
     private void checkMention(ParsedEntity<?> parsedEntity, Message message) {
-        Mention mention = extract(message.getMentions());
+        var mention = extract(message.getMentions());
         assertEquals(message, mention.getMessage());
-        assertEquals(extract(parsedEntity.getMentions()), mention.getChatName());
+        assertEquals(extract(parsedEntity.getMentions()), mention.getChannelName());
         assertNull(mention.getId());
     }
 
     private void checkHashTag(ParsedEntity<?> parsedEntity, Message message) {
-        HashTag hashTag = extract(message.getHashTags());
+        var hashTag = extract(message.getHashTags());
         assertEquals(message, hashTag.getMessage());
         assertEquals(extract(parsedEntity.getHashTags()), hashTag.getTag());
         assertNull(hashTag.getId());
     }
 
     private void checkLink(ParsedEntity<?> parsedEntity, Message message) {
-        Link link = extract(message.getLinks());
+        var link = extract(message.getLinks());
         assertEquals(message, link.getMessage());
         assertEquals(extract(parsedEntity.getLinks()), link.getUrl());
         assertNull(link.getId());
     }
 
     private void checkForwarding(ParsedEntity<WebMessage> parsedEntity, Message message) {
-        Forwarding forwarding = message.getForwarding();
+        var forwarding = message.getForwarding();
         assertEquals(message, forwarding.getMessage());
         assertEquals(parsedEntity.getEntity().getForwardedFromChannel(), forwarding.getForwardedFromChannel());
         assertEquals(parsedEntity.getEntity().getForwardedFromMessageId(), forwarding.getForwardedFromMessageId());
     }
 
     private void checkReplying(ParsedEntity<WebMessage> parsedEntity, Message message) {
-        Replying replying = message.getReplying();
+        var replying = message.getReplying();
         assertEquals(message, replying.getMessage());
         assertEquals(parsedEntity.getEntity().getReplyToMessageId(), replying.getReplyToMessageId());
     }
@@ -139,7 +140,7 @@ public class ParsedEntityConverterImplTest {
     }
 
     @Nonnull
-    private ParsedEntity<Channel> parsedChannel() {
+    private ParsedEntity<WebChannel> parsedChannel() {
         return new ParsedEntity<>(getChannel(),
                 DATE,
                 Set.of("chatMention"),
@@ -157,8 +158,8 @@ public class ParsedEntityConverterImplTest {
     }
 
     @Nonnull
-    private Channel getChannel() {
-        return new Channel(CHANNEL, "title", "description", 1);
+    private WebChannel getChannel() {
+        return new WebChannel(CHANNEL, "title", "description", 1);
     }
 
     private WebMessage getWebMessage() {

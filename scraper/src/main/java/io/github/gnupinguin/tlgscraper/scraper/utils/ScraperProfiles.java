@@ -6,4 +6,5 @@ import lombok.experimental.UtilityClass;
 public class ScraperProfiles {
 
     public static final String LOCAL = "local";
+
 }

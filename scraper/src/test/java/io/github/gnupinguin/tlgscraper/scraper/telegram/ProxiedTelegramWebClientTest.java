@@ -1,8 +1,8 @@
 package io.github.gnupinguin.tlgscraper.scraper.telegram;
 
-import io.github.gnupinguin.tlgscraper.model.scraper.web.Channel;
-import io.github.gnupinguin.tlgscraper.model.scraper.web.WebMessage;
 import io.github.gnupinguin.tlgscraper.scraper.proxy.ProxiedHttpClient;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.model.WebChannel;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.model.WebMessage;
 import io.github.gnupinguin.tlgscraper.scraper.telegram.parser.ParsedEntity;
 import io.github.gnupinguin.tlgscraper.scraper.telegram.parser.TelegramHtmlParser;
 import org.junit.Before;
@@ -48,12 +48,12 @@ public class ProxiedTelegramWebClientTest {
 
     @Test
     public void testChannelFound() {
-        ParsedEntity<Channel> parsedChannel = new ParsedEntity<>(Channel.builder().build(), null, null, null, null);
+        var parsedChannel = new ParsedEntity<>(WebChannel.builder().build(), null, null, null, null);
         when(client.sendGet("https://t.me/" + channelName))
                 .thenReturn(Optional.of(response));
         when(parser.parseChannel(response))
                 .thenReturn(parsedChannel);
-        ParsedEntity<Channel> result = telegramWebClient.searchChannel(channelName);
+        var result = telegramWebClient.searchChannel(channelName);
         assertEquals(parsedChannel, result);
     }
 
@@ -61,7 +61,7 @@ public class ProxiedTelegramWebClientTest {
     public void testChannelNotFound() {
         when(client.sendGet("https://t.me/" + channelName))
                 .thenReturn(Optional.of("error"));
-        ParsedEntity<Channel> result = telegramWebClient.searchChannel(channelName);
+        ParsedEntity<WebChannel> result = telegramWebClient.searchChannel(channelName);
         assertNull(result);
     }
 

@@ -11,7 +11,9 @@ import org.springframework.boot.context.properties.ConstructorBinding;
 @ConfigurationProperties("scraper")
 public class ScraperConfiguration {
 
-    private final int messagesCount;
+    private final int channelMessagesCount;
+
+    private final int fetchingMentionTasksCount;
 
     private final int maxFailures;
 

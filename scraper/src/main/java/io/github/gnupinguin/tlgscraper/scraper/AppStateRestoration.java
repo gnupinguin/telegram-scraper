@@ -1,40 +1,57 @@
 package io.github.gnupinguin.tlgscraper.scraper;
 
-import io.github.gnupinguin.tlgscraper.db.queue.TaskStatus;
-import io.github.gnupinguin.tlgscraper.db.queue.mention.MentionTask;
-import io.github.gnupinguin.tlgscraper.db.queue.mention.MentionTaskQueueImpl;
 import io.github.gnupinguin.tlgscraper.scraper.persistence.ApplicationStorage;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.model.MentionTask;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.model.MentionTask.TaskStatus;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.repository.MentionTaskRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
-import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
+import javax.annotation.PostConstruct;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
+@SpringBootApplication
+@ConfigurationPropertiesScan
+@EnableConfigurationProperties
+@RequiredArgsConstructor
 public class AppStateRestoration {
 
+    private final MentionTaskRepository repository;
+    private final ApplicationStorage storage;
+
     public static void main(String[] args) {
-        ConfigurableApplicationContext context = SpringApplication.run(Application.class, args);
-        var mentionTaskQueue = context.getBean(MentionTaskQueueImpl.class);
-        var storage = context.getBean(ApplicationStorage.class);
+        SpringApplication.run(AppStateRestoration.class, args);
+    }
 
-        var locked = mentionTaskQueue.getLocked(100).stream()
-                .map(MentionTask::getName)
-                .collect(Collectors.toList());
-        log.info("Locked mentions: {}", locked);
+    @PostConstruct
+    public void restore() {
+        List<MentionTask> locked = repository.getLocked(100);
 
-        var restored = storage.restore(locked);
-        log.info("Chats were removed: {}", restored);
-        locked.removeAll(restored);
+        while (!locked.isEmpty()) {
+            var lockedNames = locked.stream()
+                    .map(MentionTask::getName)
+                    .collect(Collectors.toList());
+            log.info("Locked mentions: {}", locked);
 
-        mentionTaskQueue.update(restored.stream()
-                .map(m -> new MentionTask(TaskStatus.Initial, m))
-                .collect(Collectors.toList()));
+            var restored = storage.restoreUnprocessedEntities(lockedNames);
+            log.info("Chats were removed: {}", restored);
+            lockedNames.removeAll(restored);
 
-        mentionTaskQueue.update(locked.stream()
-                .map(m -> new MentionTask(TaskStatus.SuccessfullyProcessed, m))
-                .collect(Collectors.toList()));
-        log.info("Chats were processed: {}", restored);
+            repository.saveAll(restored.stream()
+                    .map(m -> new MentionTask(m, TaskStatus.Initial))
+                    .collect(Collectors.toList()));
+
+            repository.saveAll(lockedNames.stream()
+                    .map(m -> new MentionTask(m, TaskStatus.SuccessfullyProcessed))
+                    .collect(Collectors.toList()));
+            log.info("Chats were processed: {}", restored);
+        }
     }
 
 }

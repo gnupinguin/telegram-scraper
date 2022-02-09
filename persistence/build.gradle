@@ -1,11 +1,17 @@
 description = 'Scraper Data Layer'
 
 dependencies {
-    compile project(':common-model')
 
     implementation "org.postgresql:postgresql:$postgresqlVersion"
     implementation "com.zaxxer:HikariCP:$hikariCpVersion"
     compileOnly "org.springframework:spring-context:$springVersion"
+
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-jdbc', version: springBootVersion
+    implementation group: 'org.springframework.data', name: 'spring-data-jdbc', version: '2.3.1'
+    implementation group: 'org.postgresql', name: 'postgresql', version: '42.3.1'
+
+    testImplementation group: 'org.springframework', name: 'spring-test'
+    testImplementation group: 'org.springframework.boot', name: 'spring-boot-test'
 }
 
 

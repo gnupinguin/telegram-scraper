@@ -1,8 +1,7 @@
 package io.github.gnupinguin.tlgscraper.scraper.persistence;
 
-import io.github.gnupinguin.tlgscraper.db.repository.*;
-import io.github.gnupinguin.tlgscraper.model.db.*;
-import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.model.*;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.repository.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -37,7 +36,7 @@ public class ApplicationStorageImplTest {
     private HashTagRepository hashTagRepository;
 
     @Mock
-    private ChatRepository chatRepository;
+    private ChannelRepository channelRepository;
 
     @Mock
     private ForwardingRepository forwardingRepository;
@@ -50,50 +49,51 @@ public class ApplicationStorageImplTest {
 
     @Test
     public void testSave() {
-        Chat channel = getChat();
+        Channel channel = getChannel();
         Message message1 = baseMessage(channel, 1);
         Message message2 = baseMessage(channel,2);
         channel.setMessages(List.of(message1, message2));
 
         storage.save(channel);
 
-        verify(chatRepository, times(1)).save(channel);
-        verify(messageRepository, times(1)).save(List.of(message1, message2));
+        verify(channelRepository, times(1)).save(channel);
+        verify(messageRepository, times(1)).saveAll(List.of(message1, message2));
 
-        verify(mentionRepository, times(1)).save(List.of(
+        verify(mentionRepository, times(1)).saveAll(List.of(
                 message1.getMentions().toArray(new Mention[0])[0],
                 message2.getMentions().toArray(new Mention[0])[0]
         ));
-        verify(linkRepository, times(1)).save(List.of(
+        verify(linkRepository, times(1)).saveAll(List.of(
                 message1.getLinks().toArray(new Link[0])[0],
                 message2.getLinks().toArray(new Link[0])[0]
         ));
-        verify(hashTagRepository, times(1)).save(List.of(
+        verify(hashTagRepository, times(1)).saveAll(List.of(
                 message1.getHashTags().toArray(new HashTag[0])[0],
                 message2.getHashTags().toArray(new HashTag[0])[0]
         ));
-        verify(forwardingRepository, times(1)).save(List.of(
+        verify(forwardingRepository, times(1)).saveAll(List.of(
                 message1.getForwarding(),
                 message2.getForwarding()
         ));
-        verify(replyingRepository, times(1)).save(List.of(
+        verify(replyingRepository, times(1)).saveAll(List.of(
                 message1.getReplying(),
                 message2.getReplying()
         ));
     }
 
-    private Chat getChat() {
-        return Chat.builder()
+    private Channel getChannel() {
+        return Channel.builder()
                 .name("chat")
                 .id(1L)
+                .messages(List.of())
                 .build();
     }
 
     @Test
-    public void testAlreadySaved() {
-        Chat channel = getChat();
-        when(chatRepository.getChatsByNames(List.of(channel.getName())))
-                .thenReturn(List.of(channel));
+    public void testAlreadyProcessedChannel() {
+        Channel channel = getChannel();
+        when(channelRepository.getChannelByName(channel.getName()))
+                .thenReturn(channel);
         storage.save(channel);
         verifyNoMoreInteractions(
                 messageRepository,
@@ -104,7 +104,7 @@ public class ApplicationStorageImplTest {
                 replyingRepository);
     }
 
-    private Message baseMessage(Chat chat, long id) {
+    private Message baseMessage(Channel chat, long id) {
         var message = Message.builder()
                 .channel(chat)
                 .id(id)
@@ -112,7 +112,7 @@ public class ApplicationStorageImplTest {
                         .url(URL + id)
                         .build()))
                 .mentions(Set.of(Mention.builder()
-                        .chatName("mention" + id)
+                        .channelName("mention" + id)
                         .build()))
                 .hashTags(Set.of(HashTag.builder()
                         .tag("tag" + id)

@@ -2,7 +2,7 @@ package io.github.gnupinguin.tlgscraper.db.mappers;
 
 import io.github.gnupinguin.tlgscraper.model.db.Chat;
 import io.github.gnupinguin.tlgscraper.model.db.Message;
-import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
+import io.github.gnupinguin.tlgscraper.model.scraper.web.MessageType;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;

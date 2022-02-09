@@ -20,7 +20,8 @@ telegram:
     maxTimeRangeMs: 400
 
 scraper:
-  messagesCount: 300
+  channelMessagesCount: 300
+  fetchingMentionTasksCount: 20
   maxFailures: 500
 
 logging:

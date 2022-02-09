@@ -4,7 +4,6 @@ plugins {
 }
 
 dependencies {
-    compile project(':persistence')
 
     implementation 'org.springframework.boot:spring-boot-starter'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
@@ -13,6 +12,14 @@ dependencies {
     implementation "org.jsoup:jsoup:$jsoupVersion"
 
     implementation "com.github.pengrad:java-telegram-bot-api:$telegramBotVersion"
+
+    implementation "org.postgresql:postgresql:$postgresqlVersion"
+    implementation "com.zaxxer:HikariCP:$hikariCpVersion"
+    compileOnly "org.springframework:spring-context:$springVersion"
+
+    implementation "org.springframework.boot:spring-boot-starter-jdbc:$springBootVersion"
+    implementation "org.springframework.data:spring-data-jdbc:2.3.1"
+    implementation "org.postgresql:postgresql:42.3.1"
 }
 
 mainClassName = 'io.github.gnupinguin.tlgscraper.scraper.Application'

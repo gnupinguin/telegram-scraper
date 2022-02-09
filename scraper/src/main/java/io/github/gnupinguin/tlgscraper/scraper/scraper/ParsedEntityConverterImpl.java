@@ -1,9 +1,8 @@
 package io.github.gnupinguin.tlgscraper.scraper.scraper;
 
-import io.github.gnupinguin.tlgscraper.model.db.*;
-import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
-import io.github.gnupinguin.tlgscraper.model.scraper.web.Channel;
-import io.github.gnupinguin.tlgscraper.model.scraper.web.WebMessage;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.model.*;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.model.WebChannel;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.model.WebMessage;
 import io.github.gnupinguin.tlgscraper.scraper.telegram.parser.ParsedEntity;
 import org.springframework.stereotype.Component;
 
@@ -24,22 +23,22 @@ public class ParsedEntityConverterImpl implements ParsedEntityConverter {
 
     @Nonnull
     @Override
-    public Chat convert(@Nonnull ParsedEntity<Channel> parsedChannel,
-                        @Nonnull List<ParsedEntity<WebMessage>> parsedMessages) {
-        Chat chat = getChat(parsedChannel);
-        Message channelInfoMessage = channelInfoMessage(chat, parsedChannel);
-        updateMessages(chat, channelInfoMessage, parsedMessages);
-        return chat;
+    public Channel convert(@Nonnull ParsedEntity<WebChannel> parsedChannel,
+                           @Nonnull List<ParsedEntity<WebMessage>> parsedMessages) {
+        Channel channel = getChat(parsedChannel);
+        Message channelInfoMessage = channelInfoMessage(channel, parsedChannel);
+        updateMessages(channel, channelInfoMessage, parsedMessages);
+        return channel;
     }
 
     @Override
-    public void update(@Nonnull Chat chat, @Nonnull List<ParsedEntity<WebMessage>> parsedMessages) {
-        updateMessages(chat, null, parsedMessages);
+    public void update(@Nonnull Channel channel, @Nonnull List<ParsedEntity<WebMessage>> parsedMessages) {
+        updateMessages(channel, null, parsedMessages);
     }
 
-    private Chat getChat(@Nonnull ParsedEntity<Channel> parsedChannel) {
-        Channel channel = parsedChannel.getEntity();
-        return Chat.builder()
+    private Channel getChat(@Nonnull ParsedEntity<WebChannel> parsedChannel) {
+        WebChannel channel = parsedChannel.getEntity();
+        return Channel.builder()
                 .name(channel.getName())
                 .title(channel.getTitle())
                 .description(channel.getDescription())
@@ -48,10 +47,10 @@ public class ParsedEntityConverterImpl implements ParsedEntityConverter {
     }
 
     @Nonnull
-    private Message channelInfoMessage(@Nonnull Chat chat,
-                                       @Nonnull ParsedEntity<Channel> parsedEntity) {
+    private Message channelInfoMessage(@Nonnull Channel channel,
+                                       @Nonnull ParsedEntity<WebChannel> parsedEntity) {
         Timestamp timestamp = timestamp(parsedEntity.getLoadDate());
-        return baseMessage(chat, parsedEntity)
+        return baseMessage(channel, parsedEntity)
                 .id(CHANNEL_MESSAGE_ID)
                 .type(MessageType.ChannelInfo)
                 .publishDate(timestamp)
@@ -59,17 +58,17 @@ public class ParsedEntityConverterImpl implements ParsedEntityConverter {
                 .build();
     }
 
-    private void updateMessages(@Nonnull Chat chat,
+    private void updateMessages(@Nonnull Channel channel,
                                 @Nullable Message chatMessage,
                                 @Nonnull List<ParsedEntity<WebMessage>> parsedMessages) {
-        List<Message> messages = getMessagesStream(chat, chatMessage, parsedMessages)
+        List<Message> messages = getMessagesStream(channel, chatMessage, parsedMessages)
                 .peek(message -> message.getMentions().forEach(mention -> mention.setMessage(message)))
                 .peek(message -> message.getHashTags().forEach(tag -> tag.setMessage(message)))
                 .peek(message -> message.getLinks().forEach(link -> link.setMessage(message)))
                 .peek(this::updateForwarding)
                 .peek(this::updateReplying)
                 .collect(Collectors.toList());
-        chat.setMessages(messages);
+        channel.setMessages(messages);
     }
 
     private void updateForwarding(Message message) {
@@ -85,19 +84,19 @@ public class ParsedEntityConverterImpl implements ParsedEntityConverter {
     }
 
     @Nonnull
-    private Stream<Message> getMessagesStream(@Nonnull Chat chat,
+    private Stream<Message> getMessagesStream(@Nonnull Channel channel,
                                               @Nullable Message chatMessage,
                                               @Nonnull List<ParsedEntity<WebMessage>> parsedMessages) {
         return Stream.concat(
                 Stream.of(chatMessage),
-                parsedMessages.stream().map(pm -> convertMessage(chat, pm)))
+                parsedMessages.stream().map(pm -> convertMessage(channel, pm)))
                 .filter(Objects::nonNull);
     }
 
     @Nonnull
-    private Message convertMessage(Chat chat, ParsedEntity<WebMessage> parsedMessage) {
+    private Message convertMessage(Channel channel, ParsedEntity<WebMessage> parsedMessage) {
         WebMessage message = parsedMessage.getEntity();
-        return baseMessage(chat, parsedMessage)
+        return baseMessage(channel, parsedMessage)
                 .id(message.getId())
                 .publishDate(timestamp(message.getPublishDate()))
                 .type(message.getType())
@@ -133,10 +132,10 @@ public class ParsedEntityConverterImpl implements ParsedEntityConverter {
     }
 
     @Nonnull
-    private Message.MessageBuilder baseMessage(@Nonnull Chat chat,
+    private Message.MessageBuilder baseMessage(@Nonnull Channel channel,
                                                @Nonnull ParsedEntity<?> parsedEntity) {
         return Message.builder()
-                .channel(chat)
+                .channel(channel)
                 .loadDate(timestamp(parsedEntity.getLoadDate()))
                 .hashTags(getHashTags(parsedEntity))
                 .mentions(getMentions(parsedEntity))
@@ -153,7 +152,7 @@ public class ParsedEntityConverterImpl implements ParsedEntityConverter {
     @Nonnull
     private Set<Mention> getMentions(ParsedEntity<?> parsedEntity) {
         return parsedEntity.getMentions().stream()
-                .map(mention -> Mention.builder().chatName(mention).build())
+                .map(mention -> Mention.builder().channelName(mention).build())
                 .collect(Collectors.toSet());
     }
 

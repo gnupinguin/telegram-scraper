@@ -1,6 +1,6 @@
 package io.github.gnupinguin.tlgscraper.scraper.notification;
 
-import io.github.gnupinguin.tlgscraper.db.queue.mention.MentionTask;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.model.MentionTask;
 
 import java.util.Collection;
 

@@ -1,8 +1,8 @@
 package io.github.gnupinguin.tlgscraper.scraper.telegram;
 
-import io.github.gnupinguin.tlgscraper.model.scraper.web.Channel;
-import io.github.gnupinguin.tlgscraper.model.scraper.web.WebMessage;
 import io.github.gnupinguin.tlgscraper.scraper.proxy.ProxiedHttpClient;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.model.WebChannel;
+import io.github.gnupinguin.tlgscraper.scraper.scraper.model.WebMessage;
 import io.github.gnupinguin.tlgscraper.scraper.telegram.parser.ParsedEntity;
 import io.github.gnupinguin.tlgscraper.scraper.telegram.parser.TelegramHtmlParser;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class ProxiedTelegramWebClient implements TelegramWebClient {
 
     @Override
     @Nullable
-    public ParsedEntity<Channel> searchChannel(@Nonnull String channel) {
+    public ParsedEntity<WebChannel> searchChannel(@Nonnull String channel) {
         return request("https://t.me/" + channel)
                 .map(parser::parseChannel)
                 .orElse(null);

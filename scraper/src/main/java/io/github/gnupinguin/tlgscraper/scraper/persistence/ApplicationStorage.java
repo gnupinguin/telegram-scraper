@@ -1,15 +1,15 @@
 package io.github.gnupinguin.tlgscraper.scraper.persistence;
 
 
-import io.github.gnupinguin.tlgscraper.model.db.Chat;
+import io.github.gnupinguin.tlgscraper.scraper.persistence.model.Channel;
 
 import javax.annotation.Nonnull;
 import java.util.List;
 
 public interface ApplicationStorage {
 
-    void save(@Nonnull Chat chat);
+    void save(@Nonnull Channel chat);
 
-    List<String> restore(List<String> blockedMentions);
+    List<String> restoreUnprocessedEntities(List<String> blockedMentions);
 
 }

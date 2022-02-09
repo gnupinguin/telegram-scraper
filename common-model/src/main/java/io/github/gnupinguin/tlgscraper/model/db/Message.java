@@ -1,6 +1,6 @@
 package io.github.gnupinguin.tlgscraper.model.db;
 
-import io.github.gnupinguin.tlgscraper.model.scraper.MessageType;
+import io.github.gnupinguin.tlgscraper.model.scraper.web.MessageType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
