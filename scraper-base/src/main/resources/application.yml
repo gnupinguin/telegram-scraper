@@ -1,0 +1,31 @@
+app:
+  pool:
+    poolSize: 6
+
+tor:
+  host: localhost
+  socksPort: 9050
+  httpPort: 8118
+  controlPort: 9051
+  password: '""'
+
+db:
+  url: jdbc:postgresql://localhost:5433/scraperdb
+  username: scraper
+  password: Scraper_db!
+
+telegram:
+  limits:
+    minTimeRangeMs: 200
+    maxTimeRangeMs: 400
+
+scraper:
+  messagesCount: 300
+  maxFailures: 500
+
+logging:
+  level:
+    org:
+      springframework:
+        boot:
+          autoconfigure: ERROR

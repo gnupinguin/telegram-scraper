@@ -17,7 +17,7 @@ public class Message {
 
     private Long internalId;
 
-    private Chat channel;
+    private Channel channel;
 
     private long id;
 

@@ -13,7 +13,7 @@ import java.util.List;
 @ToString(exclude = {"messages", "description"})
 @Builder
 @AllArgsConstructor
-public class Chat {
+public class Channel {
 
     private Long id;
 

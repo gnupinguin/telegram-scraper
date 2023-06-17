@@ -1,0 +1,14 @@
+version: '3'
+services:
+  tlg:
+#    restart: always
+    image: 'postgres:latest'
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=scraper
+      - POSTGRES_PASSWORD=Scraper_db!
+      - POSTGRES_DB=scraperdb
+    volumes:
+      - $HOME/volume:/var/lib/postgresql/data
+      - ./schema:/docker-entrypoint-initdb.d

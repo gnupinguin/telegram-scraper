@@ -1,3 +1,0 @@
-description = 'Common Data Model'
-
-apply plugin: 'java-library'

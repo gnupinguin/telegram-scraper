@@ -1,12 +1,12 @@
 # telegram-scrapper
-Telegram channel scrapper. It based on Telegram web version.
+Telegram webChannel scrapper. It based on Telegram web version.
 
 ## Goal
 Collect Russian news from public Telegram channels. 
 Also, it can be extended for other languages. 
 
 ## Extracted entities
- - channel info
+ - webChannel info
    - name
    - title
    - description
@@ -36,7 +36,7 @@ Schema present [here](persistence/src/main/resources/docker-compose.yml)
 
 ### Scraper
 Scraper booked few channels from queue, analyzes it and stores extracted info to database.
-Found channel mentions will be stored to queue, old channels will be marked as processed.
+Found webChannel mentions will be stored to queue, old channels will be marked as processed.
 The module is synchronizes by mentions queue and can be launched in multiple instances.
 
 ![image](pictures/architecture_min.png)
@@ -62,19 +62,19 @@ All scraper settings specified in scraper [application.yml](scraper/src/main/res
 - ``scraper.messagesCount`` -  messages count that scraper reads from Telegram. In general, the scraper reads a little bit more than the specified count.
 - ``scraper.maxFailures`` - Max errors number in a row to read info about channels. 
   Errors counter will be restored to 0 after successful attempt. 
-  If unsuccessful attempts count to read info about channels will be reached ``scraper.maxFailures`` then all chats, that were marked as unreadable, will be restored as unprocessed.
+  If unsuccessful attempts count to read info about channels will be reached ``scraper.maxFailures`` then all channels, that were marked as unreadable, will be restored as unprocessed.
   Scrapper will be stopped.
   This is **the most important** setting. 
   You need to manually define its value. 
   Telegram, on suspicion of scraping, will try to block access to its resources. 
   To do this, the program uses Tor to avoid blocking by IP address. 
-  But also in the web version it is impossible to read information about private chats, bots, groups, etc. 
+  But also in the web version it is impossible to read information about private channels, bots, groups, etc. 
   In all cases, Telegram returns one answer, so it is not possible to indicate whether a blocking has occurred.
   Run the program and check the logs: which channels will be marked as broken.
 
 
 You can enable bot notifications for scraper failures. 
-After ``scraper.maxFailures`` count will be reached, the scraper sends notification to specific Telegram chat and awaiting approval to stop or continue work.
+After ``scraper.maxFailures`` count will be reached, the scraper sends notification to specific Telegram channel and awaiting approval to stop or continue work.
 Add the below properties to config file:
 
 ``` 
